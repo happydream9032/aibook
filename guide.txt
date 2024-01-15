@@ -1,0 +1,5 @@
+1. You must copy .env.local file into /frontend location
+2. You must run "npm install" by cmd into /frontend location
+3. You must run "npm install" by cmd into /backend location
+4. You run backend.bat to run backend
+5. You run frontend.bat to run backend
