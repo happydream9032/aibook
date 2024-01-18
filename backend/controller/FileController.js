@@ -6,8 +6,6 @@ const fs = require('fs');
 const { tableFromIPC } = require('apache-arrow');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
-const db = new duckdb.Database(process.env.DATABASE_NAME);
-
 async function runPrompt(req, res) { 
   const { prompt, type } = req.body;
   console.log(prompt);
