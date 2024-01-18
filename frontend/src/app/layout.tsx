@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 //import SupabaseProvider from "@/providers/SupabaseProvider";
 import UserProvider from "@/providers/UserProvider";
+import { Providers } from "@/redux/provider";
 
 const font = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -18,9 +19,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+      <html lang="en">
       <body className={font.className}>
-        <ThemeProvider
+        <Providers><ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
@@ -30,8 +31,10 @@ export default async function RootLayout({
           {/* <SupabaseProvider>
             <UserProvider>{children}</UserProvider>
           </SupabaseProvider> */}
-        </ThemeProvider>
+        </ThemeProvider></Providers>
+        
       </body>
     </html>
+    
   );
 }

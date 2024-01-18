@@ -4,8 +4,11 @@ import TypingComponent from "./input";
 import Papa from 'papaparse';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useDuckDb } from "duckdb-wasm-kit";
 
 const RunSQL = (props : any) => {
+  const { db , loading, error } = useDuckDb();
+
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
   const [isSQLQuery, setIsSQLQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,35 +19,36 @@ const RunSQL = (props : any) => {
   const [isfilename, setIsFileName] = useState("table");
 
   const handleRunQuery = async () => {
+    let conn = await db.connect();
+
     try {
-      const data = {
-        sql_query: isSQLQuery,
-      };
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/runquery";
-      await axios
-        .post(apiUrl, data)
-        .then((response) => {
-          console.log("response is", response);
-          if (response.status == 200) {
-            const reader = response.data.data;
-            const titles = Object.keys(reader[0]);
-            setTableTitle(titles);
-            setResultData(reader);
-            setIsLoading(true);
-          } else if(response.status == 500) {
-            toast.error("Run SQL Query is Failure", { position: "top-right" });
-          }
+      if(isSQLQuery != ""){
+        let check_table = await conn.query(isSQLQuery);
+        let row_schemas = check_table.schema.fields;
+        let row_array :Array<String> = [];
+        row_schemas.map((row : any)=>{
+          row_array.push(row["name"]);
         })
-        .catch((error) => {
-          toast.error("Run SQL Query is Failure", { position: "top-right" });
-          console.error("Error:", error.message);
-          // Handle the error
-        });
+
+        let colume_length_array = check_table._offsets;
+        let column_length = colume_length_array[colume_length_array.length-1];
+        let column_array : any = []
+        for(let i =0; i < Number(column_length); i++){
+          let temp = check_table.get(i).toArray();
+          column_array.push(temp);
+        }
+        console.log("Result is", column_array);
+        setTableTitle(row_array);
+        setResultData(column_array);
+        setIsLoading(true);
+      }
     } catch (error) {
       toast.error("Run SQL Query is Failure", { position: "top-right" });
       console.error("Error:", error);
     }
+    conn.close();
   };
+  
   const downloadCSV = () => { 
     const csvData = Papa.unparse(isResultData);
     // Creating a Blob for having a csv file format  

@@ -2,13 +2,20 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import TypingComponent from "./input";
 import Papa from 'papaparse';
+import { useDuckDb } from "duckdb-wasm-kit";
+import { setgpt3_5, setgpt4, reset } from "@/redux/features/todo-slice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 const AIPrompt = (props : any) => {
+  const { db , loading, error } = useDuckDb();
+  const type = useAppSelector((state) => state.todoReducer.type);
+
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
   const [isSQLQuery, setIsSQLQuery] = useState("");
   const [promptvalue, setPromptValue] = useState("");
   const [ispromptfinish, setIsPromptFinish] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isFailuer, setIsFailure] = useState(false);
   const [isLoading, setIsLoading] = useState(false);  // statue get query
   const [isRunLoading, setIsRunLoading] = useState(false); // status get result of run query
   const [isResultData, setResultData] = useState([]);
@@ -42,60 +49,71 @@ const AIPrompt = (props : any) => {
 
   const handleRunPrompt = async () => {
     try {
-      const data = {
-        prompt: promptvalue,
-      };
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/runprompt";
-      await axios
-        .post(apiUrl, data)
-        .then((response) => {
-          if (response.status == 200) {
-            const reader = response.data.data;
-            const response_query = reader.replace(";","");
-            console.log("response_query is", response_query);
-            setIsSQLQuery(response_query);
-            setIsLoading(true);
-            handleRunQuery(response_query, true);
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error.message);
-          // Handle the error
-        });
+      if(promptvalue != ""){
+        const data = {
+          prompt: promptvalue,
+          type : type,
+        };
+        console.log("request data is", data);
+        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/runprompt";
+        await axios
+          .post(apiUrl, data)
+          .then((response) => {
+            if (response.status == 200) {
+              const reader = response.data.data;
+              const response_query = reader.replace(";","");
+              console.log("response_query is", response_query);
+              setIsSQLQuery(response_query);
+              setIsLoading(true);
+              handleRunQuery(response_query, true);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error.message);
+            // Handle the error
+          });
+      }
     } catch (error) {
       console.error("Error:", error);
+      setIsRunLoading(true);
+      setIsFailure(true);
     }
   };
+
   const handleRunQuery = async (query:string, type:boolean) => {
     try {
-      console.log("input data is",query, type);
-      let data = {"sql_query" : ""}
+      let data = ""
       if(type == true){
-        data["sql_query"] = query;
+        data = query;
       } else {
-        data["sql_query"] = isSQLQuery;
+        data = isSQLQuery;
       }
-      console.log("request data is", data);
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/runquery";
-      await axios
-        .post(apiUrl, data)
-        .then((response) => {
-          console.log("response is", response);
-          if (response.status == 200) {
-            const reader = response.data.data;
-            const titles = Object.keys(reader[0]);
-            setTableTitle(titles);
-            setResultData(reader);
-            setIsRunLoading(true);
-          }
+      let conn = await db.connect();
+      if(data != ""){
+        let check_table = await conn.query(data);
+        let row_schemas = check_table.schema.fields;
+        let row_array :Array<String> = [];
+        row_schemas.map((row : any)=>{
+          row_array.push(row["name"]);
         })
-        .catch((error) => {
-          console.error("Error:", error.message);
-          // Handle the error
-        });
-      
+
+        let colume_length_array = check_table._offsets;
+        let column_length = colume_length_array[colume_length_array.length-1];
+        let column_array : any = []
+        for(let i =0; i < Number(column_length); i++){
+          let temp = check_table.get(i).toArray();
+          column_array.push(temp);
+        }
+        console.log("Result is", column_array);
+        setTableTitle(row_array);
+        setResultData(column_array);
+        setIsRunLoading(true);
+      }
+      conn.close();
     } catch (error) {
       console.error("Error:", error);
+      setIsRunLoading(true);
+      setIsFailure(true);
     }
   };
   const downloadCSV = () => { 
@@ -125,7 +143,7 @@ const AIPrompt = (props : any) => {
       {ispromptfinish ? (
         <div className="mb-5">
           <div className="w-full px-4 py-2 gap-2 text-indigo-400 font-medium text-lg border rounded-lg ring-1 border-indigo-400 flex items-center justify-between">
-            <div className="items-center gap-3 lg:flex">
+            <div className="items-center gap-3 lg:flex flex-1">
               <svg
                 stroke="currentColor"
                 fill="none"
@@ -141,7 +159,21 @@ const AIPrompt = (props : any) => {
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path>
               </svg>
-              <span>{promptvalue}</span>
+              <input
+                className="text-sm text-indigo-500 font-semibold w-full border border-transparent focus:outline-none"
+                type="text"
+                value={promptvalue}
+                onChange={(e) => {
+                  setPromptValue(e.target.value);
+                  if (e.target.value == "/") {
+                    props.onData(0);
+                  } else {
+                    props.onData(4);
+                  }
+                }}
+                onKeyDown={handleKeyDown}
+              />
+              {/* <span>{promptvalue}</span> */}
             </div>
             <div>
               <button
@@ -186,8 +218,14 @@ const AIPrompt = (props : any) => {
             </div>
           </div>
           {isLoading && (
+            <div>{isFailuer?(
+              <div role="alert" className="relative w-full p-4 pl-11 translate-y-[-3px] border-destructive/50 text-destructive dark:border-destructive text-destructive border-2 bg-red-50 rounded-md rounded-t-none">
+                <h5 className="mb-1 font-medium leading-none tracking-tight">Oops!</h5>
+                <div className="text-sm [&amp;_p]:leading-relaxed whitespace-pre-wrap">Something went wrong calling the OpenAI API</div>
+              </div>
+            ):(
             <div className="ma-[3px] flex flex-col rounded-lg border border-indigo-700 shadow">
-            <div className="w-full relative pr-20 py-3 pl-4 bg-black min-h-[110px]">
+              <div className="w-full relative pr-20 py-3 pl-4 bg-black min-h-[110px]">
               <textarea
                 id="comment"
                 rows={4}
@@ -359,7 +397,8 @@ const AIPrompt = (props : any) => {
                 )}
               </div>
             </div>
-          </div>
+          </div>)}</div>
+            
           )}
         </div>
       ) : (
