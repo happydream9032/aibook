@@ -2,9 +2,15 @@ import { useState, useEffect } from "react";
 import Papa from 'papaparse';
 import axios from "axios";
 import TypingComponent from "./input";
-// import Table from 'apache-arrow';
+import { useDuckDb } from "duckdb-wasm-kit";
+import { insertFile } from "duckdb-wasm-kit";
+import { exportCsv } from "duckdb-wasm-kit";
+import { exportArrow } from "duckdb-wasm-kit";
+import { exportParquet } from "duckdb-wasm-kit";
 
 const Importfile = (props : any) => {
+  const { db , loading, error } = useDuckDb();
+
   const [isImportTab, setIsImportTab] = useState(true);
   const [isFetchTab, setIsFetchTab] = useState(false);
   const [isPasteTableTab, setIsPasteTableTab] = useState(false);
@@ -18,154 +24,226 @@ const Importfile = (props : any) => {
   const [tableheader, setTableHeader] = useState<String[]>([]);
   const [tableData, setTableData] = useState([]);
   const [tabletitle, setTableTitle] = useState("");
+  const [exportFileName,setExportFileName] = useState("");
   const [isShowLess, setIsShowLess] = useState(true);
   const [isstringtabledata, setIsStringTableData] = useState("");
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
-
+  
   const handleFileChange = async (e: any) => {
-    const csvfile = e.target.files[0];
-    const formData = new FormData();
-    formData.append("file", csvfile);
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/fileupload";
-    try {
-      await axios
-        .post(apiUrl, formData)
-        .then((response : any) => {
-          setIsLoading1(false);
-          setIsLoading2(false);
-          if (response.status == 200) {
-            const reader = response.data.data;
-            const titles = Object.keys(reader[0]);
-            setTableHeader(titles);
-            setTableData(reader);
-            setTableTitle(response.data.table_name);
-            setIsTableShow(true);
-          }
-        })
-        .catch((error: any) => {
-          console.error("Error:", error.message);
-        });
-    } catch (error) {
-      console.error("Upload failed:", error);
+    let csvfile = e.target.files[0];
+    if(csvfile != null){
+      console.log(csvfile.name);
+      let conn = await db.connect();
+
+      let table_count_query = await conn.query(`SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${csvfile.name}%';`);
+      let table_count_array = table_count_query._offsets;
+      let table_count = table_count_array[table_count_array.length-1];
+
+      let table_name = csvfile.name
+      if(Number(table_count) > 0){
+        table_name = csvfile.name.replace(".","("+String(table_count)+").")
+      }
+      console.log("table name is", table_name);
+
+      await insertFile(db, csvfile ,table_name);
+      let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
+    
+      let row_schemas = check_table.schema.fields;
+      let row_array :Array<String> = [];
+      row_schemas.map((row : any)=>{
+        row_array.push(row["name"]);
+      })
+
+      let colume_length_array = check_table._offsets;
+      let column_length = colume_length_array[colume_length_array.length-1];
+
+      let column_array : any = []
+      for(let i =0; i < Number(column_length); i++){
+        let temp = check_table.get(i).toArray();
+        column_array.push(temp);
+      }
+      setTableHeader(row_array);
+      setTableData(column_array);
+      setTableTitle(table_name);
+      setExportFileName(table_name);
+      setIsTableShow(true);
+
+      conn.close();
     }
   };
 
   const handleFetchUrl = async () => {
-    try {
-      const data = {
-        url: isfetchurl,
-      };
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/fetchurl";
-      await axios
-        .post(apiUrl, data)
-        .then((response : any) => {
-          setIsLoading1(false);
-          setIsLoading2(false);
-          console.log("response is", response);
-          if (response.status == 200) {
-            const reader = response.data.data;
-            const titles = Object.keys(reader[0]);
-            setTableHeader(titles);
-            setTableData(reader);
-            setTableTitle(response.data.table_name);
-            setIsTableShow(true);
-          }
-        })
-        .catch((error : any) => {
-          console.error("Error:", error.message);
-          // Handle the error
-        });
-    } catch (error) {
-      console.error("Error:", error);
+    if (isfetchurl != ""){
+      let conn = await db.connect();
+      let arry = isfetchurl.split('/');
+      let lastElement = arry[arry.length - 1];
+
+      let table_count_query = await conn.query(`SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${lastElement}%';`);
+      let table_count_array = table_count_query._offsets;
+      let table_count = table_count_array[table_count_array.length-1];
+
+      let table_name = lastElement
+      if(Number(table_count) > 0){
+        table_name = lastElement.replace(".","("+String(table_count)+").")
+      }
+      console.log("table name is", table_name);
+      
+      if (String(lastElement).includes(".csv") || String(lastElement).includes(".CSV")){
+        let table_column : any = [];
+        let table_row : any = [];
+
+        await fetch(isfetchurl)
+          .then(response => response.text())
+          .then(csvText => {
+            let rowData = [];
+            let array = [];
+          // Split the CSV data into rows
+            rowData = csvText.split('\n');
+            for (let i=1 ; i< rowData.length; i++){
+              let temp = rowData[i].split(',');
+              array.push(temp);
+            }
+            table_column = array;
+            table_row = rowData[0];
+          });
+
+          let csv = table_column.map(row => row.join(',')).join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const file = new File([blob], "data.csv", { type: 'text/csv', lastModified: Date.now() });
+          await insertFile(db, file, table_name);
+
+          console.log("Result is", table_column);
+          setTableHeader(table_row);
+          setTableData(table_column);
+          setTableTitle(table_name);
+          setExportFileName(table_name);
+          setIsTableShow(true);
+
+      } else if (String(lastElement).includes(".parquet") || String(lastElement).includes(".PARQUET")){
+        await conn.query(`CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`);
+      } else if (String(lastElement).includes(".arrow") || String(lastElement).includes(".ARROW")){
+        await conn.query(`CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`);
+      }
+
+      let check_table = await conn.query(`SELECT * FROM ${table_name}`);
+      let row_schemas = check_table.schema.fields;
+      let row_array :Array<String> = [];
+      row_schemas.map((row : any)=>{
+        row_array.push(row["name"]);
+      })
+
+      let colume_length_array = check_table._offsets;
+      let column_length = colume_length_array[colume_length_array.length-1];
+      let column_array : any = []
+      for(let i =0; i < Number(column_length); i++){
+        let temp = check_table.get(i).toArray();
+        column_array.push(temp);
+      }
+      console.log("Result is", column_array);
+      setTableHeader(row_array);
+      setTableData(column_array);
+      setTableTitle(table_name);
+      setExportFileName(table_name);
+      setIsTableShow(true);
+      
+      conn.close();
     }
   };
+
   const handlePasteTable = async(data : string) => {
     let stringTableData = data
     if (stringTableData != ""){
-      try {
-        let lines = stringTableData.split('\n');
-          // Extract the headers
-          let headers = lines[0].split('\t');
-          let table_headers = [];
-          let table_headers1 = [];
-          for(let i=0; i<headers.length; i++){
-            if(headers[i] != ""){
-              let temp = headers[i]+ " VARCHAR";
-              table_headers1.push(temp);
-              table_headers.push(headers[i]);
-            }
-          }
-          // Create an array to hold the JSON objects
-          let jsonData = [];
-  
-          // Iterate over the lines starting from the second line
-          for (let i = 1; i < lines.length; i++) {
-            let currentLine = lines[i].split('\t');
-            let jsonObject = [];
-            for (let j = 0; j < headers.length; j++) {
-              if(headers[j] != ""){
-                jsonObject.push(currentLine[j]);
-              }
-            }
-            jsonData.push(jsonObject);
-          }
-          console.log("data of result is", jsonData)
-          let data = {
-            "header_item" : table_headers1.join(', '),
-            "header_data" : table_headers,
-            "json_data" : jsonData
-          }
-          const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/pastetable";
-          await axios
-            .post(apiUrl, data)
-            .then((response : any) => {
-              setIsLoading1(false);
-              setIsLoading2(false);
-              console.log("response is", response);
-              if (response.status == 200) {
-                const reader = response.data.data;
-                const titles = Object.keys(reader[0]);
-                setTableHeader(titles);
-                setTableData(reader);
-                setTableTitle(response.data.table_name);
-                setIsTableShow(true);
-              }
-            })
-            .catch((error : any) => {
-              console.error("Error:", error.message);
-              // Handle the error
-            })
-      } catch (error) {
-        console.error("Error:", error);
+      let table_name = "pastTable"
+
+      let conn = await db.connect();
+      let table_count_query = await conn.query(`SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}%';`);
+      let table_count_array = table_count_query._offsets;
+      let table_count = table_count_array[table_count_array.length-1];
+
+      if(Number(table_count) > 0){
+        table_name = "pastTable(" + String(table_count)+")";
       }
+
+      let rowData = [];
+      let array = [];
+    // Split the CSV data into rows
+      rowData = stringTableData.split('\n');
+      for (let i=1 ; i< rowData.length; i++){
+        let temp = rowData[i].split('\t');
+        array.push(temp);
+      }
+      let csv = array.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const file = new File([blob], "data"+String(table_count)+".csv", { type: 'text/csv', lastModified: Date.now() });
+      await insertFile(db, file, table_name);
+
+      let check_table = await conn.query(`SELECT * FROM ${table_name}`);
+      let row_schemas = check_table.schema.fields;
+      let row_array :Array<String> = [];
+      row_schemas.map((row : any)=>{
+        row_array.push(row["name"]);
+      })
+
+      let colume_length_array = check_table._offsets;
+      let column_length = colume_length_array[colume_length_array.length-1];
+      let column_array : any = []
+      for(let i =0; i < Number(column_length); i++){
+        let temp = check_table.get(i).toArray();
+        column_array.push(temp);
+      }
+      console.log("Result is", column_array);
+      setTableHeader(row_array);
+      setTableData(column_array);
+      setTableTitle(table_name);
+      setExportFileName(table_name);
+      setIsTableShow(true);
+
+      conn.close();
     }
-    
   }
-  const downloadCSV = () => { 
-    const csvData = Papa.unparse(tableData);
-    // Creating a Blob for having a csv file format  
-    // and passing the data with type 
-    const blob = new Blob([csvData], { type: 'text/csv' }); 
-  
-    // Creating an object for downloading url 
-    const url = window.URL.createObjectURL(blob) 
-    console.log("URL is", url);
-    // Creating an anchor(a) tag of HTML 
-    const a = document.createElement('a') 
-  
-    // Passing the blob downloading url  
-    a.setAttribute('href', url) 
-  
-    // Setting the anchor tag attribute for downloading 
-    // and passing the download file name 
-    a.setAttribute('download', tabletitle+'.csv'); 
-  
-    // Performing a download with click 
-    a.click() 
+
+  const downloadFile = async (type : number) => { 
+    // const csvData = Papa.unparse(tableData);
+    // // Creating a Blob for having a csv file format  
+    // // and passing the data with type 
+    // const blob = new Blob([csvData], { type: 'text/csv' }); 
+    let file : any;
+    let filename : string = "";
+    let file_type = ""
+    if(type == 0 ){
+      filename = exportFileName.replace(".parquet",".csv").replace(".arrow",".csv").replace(".PARQUET",".csv").replace(".ARROW",".csv")
+      file = await exportCsv(db, tabletitle, filename, "," );
+      file_type = "text/csv"
+    } else if (type == 1) {
+      filename = exportFileName.replace(".csv",".parquet").replace(".arrow",".parquet").replace(".CSV",".parquet").replace(".ARROW",".parquet")
+      file = await exportParquet(db, tabletitle, filename, "zstd" );
+      file_type = "application/vnd.apache.parquet"
+    } else if (type == 2) {
+      filename = exportFileName.replace(".csv",".arrow").replace(".parquet",".arrow").replace(".PARQUET",".arrow").replace(".CSV",".arrow")
+      file = await exportArrow(db, tabletitle, filename );
+      file_type = "application/vnd.apache.arrow.file" 
+    }
+    console.log("file is", file);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const blob = new Blob([buffer], { type: file_type });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename; // Replace with the actual file name
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('File download failed', error);
+    }
   }
 
   return (
-    <>
+    <div>
       {istableshow ? (
         <div
           className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-400 right-1 shadow"
@@ -203,21 +281,18 @@ const Importfile = (props : any) => {
                 <div className="w-full h-full absolute">
                   <table className=" bg-white text-sm">
                     <thead>
-                      <tr className="bg-blue-gray-100 text-gray-700">
-                        {tableheader.map((item, index) => (
-                          <th key={index} className="py-3 px-4 text-left">
-                            {item}
-                          </th>
-                        ))}
+                    <tr className="bg-blue-gray-100 text-gray-700">
+                      {tableheader && 
+                      tableheader.map((header, index) => <th key={index} className="py-3 px-4 text-left">{header}</th>)}
                       </tr>
                     </thead>
                     <tbody className="text-blue-gray-900">
-                      {tableData.map((item, index) => (
+                      {tableData.map((item : any, index) => (
                         <tr
                           key={index}
                           className="border-b border-blue-gray-200"
                         >
-                          {Object.values(item).map((value, index1) => (
+                          {item.map((value : String, index1 : any) => (
                             <td key={index1} className="py-3 px-4">
                               {value == "null" ? "" : value}
                             </td>
@@ -232,7 +307,7 @@ const Importfile = (props : any) => {
           </div>
           <div className="flex h-[45px] items-center my-2">
             <div className="px-2 w-full flex items-center justify-between">
-              <input className="text-sm text-gray-500 border border-transparent focus:outline-none" value = {tabletitle} onChange={(e)=>{setTableTitle(e.currentTarget.value)}}></input>
+              <input className="flex-1 text-sm text-gray-500 border border-transparent focus:outline-none" value = {exportFileName} onChange={(e)=>{setExportFileName(e.currentTarget.value)}}></input>
               <div className="items-center gap-3 lg:flex">
                 <span className="text-sm text-gray-300">
                   {tableData.length} rows × {tableheader.length} columns
@@ -282,7 +357,7 @@ const Importfile = (props : any) => {
                         <button
                           type="button"
                           className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
-                          onClick={downloadCSV}
+                          onClick={()=>{downloadFile(0)}}
                         >
                           <span className="text-sm text-black">CSV</span>
                         </button>
@@ -291,6 +366,7 @@ const Importfile = (props : any) => {
                         <button
                           type="button"
                           className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                          onClick={()=>{downloadFile(1)}}
                         >
                           <span className="text-sm text-black">Parquet</span>
                         </button>
@@ -299,6 +375,7 @@ const Importfile = (props : any) => {
                         <button
                           type="button"
                           className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                          onClick={()=>{downloadFile(2)}}
                         >
                           <span className="text-sm text-black">Arrow</span>
                         </button>
@@ -479,15 +556,15 @@ const Importfile = (props : any) => {
                             htmlFor="file"
                             className="relative gap-2 flex flex-col items-center justify-center rounded-md text-center min-h-[156px] cursor-pointer hover:bg-gray-200"
                           >
+                            {isloading1 ? (
                             <span className="rounded-lg border border-[#e0e0e0] bg-indigo-500 py-2 px-7 text-sm font-medium text-white">
-                              {isloading1 && (
-                                <svg
-                                  className="animate-spin h-5 w-5 mr-3"
-                                  viewBox="0 0 24 24"
-                                ></svg>
-                              )}
-                              Choose file
+                              Loading ...
                             </span>
+                            ) : (
+                            <span className="rounded-lg border border-[#e0e0e0] bg-indigo-500 py-2 px-7 text-sm font-medium text-white">
+                              Choose file
+                            </span>)}
+                            
                             <span className="block flex-col text-sm font-small text-gray-400">
                               CSV, Parquet, or Arrow
                             </span>
@@ -545,15 +622,14 @@ const Importfile = (props : any) => {
                                 setIsLoading2(true);
                               }}
                             >
-                              {isloading2 && (
-                                <svg
-                                  className="animate-spin h-5 w-5 mr-3 text-white"
-                                  viewBox="0 0 24 24"
-                                ></svg>
-                              )}
-                              Load
+                              {isloading2 ? "Loading" : "Load"}
                             </button>
                           </div>
+                          {isloading2 && (
+                            <span className="flex-col items-center justify-center block text-sm font-small text-indigo-400">
+                              Loading ....
+                            </span>
+                          )}
                           <span className="flex-col items-center justify-center block text-sm font-small text-gray-400">
                             CSV, Parquet, or Arrow
                           </span>
@@ -733,7 +809,7 @@ const Importfile = (props : any) => {
         </div>
       )}
       <TypingComponent />
-    </>
+    </div>
   );
 };
 

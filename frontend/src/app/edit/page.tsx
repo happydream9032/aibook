@@ -2,18 +2,20 @@
 
 import Navbar1 from "@/components/layout/Navbar/navbar";
 import MainPage from "@/components/ui/edit/mainpage";
-
-// import { AsyncDuckDB } from "@duckdb/duckdb-wasm";
-// import { useDuckDb } from "../../hooks/useDuckDb";
-// import { useDuckDbQuery } from "../../hooks/useDuckDbQuery";
-// import initializeDuckDb, { getDuckDB } from "../../init/initializeDuckDb";
-// import { runQuery } from "../../util/runQuery";
-// import { getTempFilename } from "../../util/tempfile";
-// import { drop, cardinalities } from "../../util/queries";
+import { DuckDBConfig } from "@duckdb/duckdb-wasm";
+import { initializeDuckDb } from "duckdb-wasm-kit";
 
 import { useState, useEffect } from "react";
 
 export default function Home() {
+  useEffect(() => {
+    const config: DuckDBConfig = {
+      query: {
+         castBigIntToDouble: true,
+        },       
+      }        
+      initializeDuckDb({ config, debug: true });
+    }, []);
   return (
     <main>
       <div className="bg-white text-gray-600">

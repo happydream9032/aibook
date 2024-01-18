@@ -1,11 +1,16 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Drawer from "./Drawer";
 import Data from "./DrawerData";
+import { setgpt3_5, setgpt4, reset } from "@/redux/features/todo-slice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 const Navbar1 = () => {
+  const type = useAppSelector((state) => state.todoReducer.type);
+  const dispatch = useAppDispatch();
+
   const [isOpenGPTType, setIsOpenGPTType] = useState(false);
   const [isGPTType, setIsGPTType] = useState(false);
   const [isOpenPrivate, setIsOpenPrivate] = useState(false);
@@ -33,9 +38,6 @@ const Navbar1 = () => {
   };
   const closeDropdown = () => {
     setIsOpenGPTType(isOpenGPTType);
-  };
-  const changeGPTType = () => {
-    setIsGPTType(!isGPTType);
   };
 
   return (
@@ -154,6 +156,8 @@ const Navbar1 = () => {
                         onClick={() => {
                           setIsGPTType(true);
                           setIsOpenGPTType(false);
+                          dispatch(setgpt3_5());
+                          console.log(type);
                         }}
                       >
                         <div className="grid grid-cols-6">
@@ -198,6 +202,8 @@ const Navbar1 = () => {
                         onClick={() => {
                           setIsGPTType(false);
                           setIsOpenGPTType(false);
+                          dispatch(setgpt4());
+                          console.log(type);
                         }}
                       >
                         <div className="grid grid-cols-6">
