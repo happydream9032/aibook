@@ -17,8 +17,10 @@ const MainPage = () => {
       query: {
         castBigIntToDouble: true,
       },
+      //path: "./sample_database.duckdb"
     };
     initializeDuckDb({ config, debug: true });
+    
   }, []);
 
   return (

@@ -1,5 +1,14 @@
+Requirments :  You must install Node.js and Python on your local machine.
+
+
+--------------- Run frontend -----------------
+
 1. You must copy .env.local file into /frontend location
 2. You must run "npm install" by cmd into /frontend location
-3. You must run "npm install" by cmd into /backend location
-4. You run backend.bat to run backend
-5. You run frontend.bat to run backend
+3. You can run frontend.bat to run frontend.
+
+---------------- Run backend -----------------
+
+1. You must run this command by  "pip install -r requirements.txt"
+2. You can run backend.bat to run backend.
+3. You can change your OPEN_AI_KEY in ask.py file at 10 line.
