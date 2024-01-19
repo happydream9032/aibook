@@ -1,2 +1,2 @@
 cd backend
-npm start
+python backend.py

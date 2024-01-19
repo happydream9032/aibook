@@ -1,0 +1,5 @@
+duckdb
+tabulate
+openai==0.28
+flask
+flask_cors

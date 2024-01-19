@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import { useDuckDb } from "duckdb-wasm-kit";
 import { setgpt3_5, setgpt4, reset } from "@/redux/features/todo-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { useDuckDbQuery } from "duckdb-wasm-kit";
 
 const AIPrompt = (props : any) => {
   const { db , loading, error } = useDuckDb();
@@ -49,30 +50,60 @@ const AIPrompt = (props : any) => {
 
   const handleRunPrompt = async () => {
     try {
-      if(promptvalue != ""){
+      let conn = await db.connect();
+      if(promptvalue != ""){        
+        let schema_tables = await conn.query("SELECT table_name FROM information_schema.tables;");
+        let colume_length_array = schema_tables._offsets;
+        let column_length = colume_length_array[colume_length_array.length-1];
+        let column_array : any = [];
+
+        let schema = [];
+        for(let i =0; i < Number(column_length); i++){
+          let temp_schema : any = {
+            table_name : "",
+            row : {},
+            data : {}
+          }
+
+          let temp = schema_tables.get(i).toArray(); // table name
+          let sub_table = await conn.query(`SELECT * FROM '${String(temp)}' LIMIT 1;`);
+
+          let sub_table_schema = sub_table.schema.fields;
+          let data_array = sub_table.get(0).toArray();
+
+          let temp_schema_row : any = {};
+          let temp_schema_data : any = {};
+          temp_schema["table_name"] = String(temp);
+          for(let i=0; i<sub_table_schema.length; i++){
+            temp_schema_row[sub_table_schema[i]["name"]] = String(sub_table_schema[i]["type"]);
+            temp_schema_data[sub_table_schema[i]["name"]] = data_array[i]
+            //temp_array.push(String(sub_table_schema[i]["name"]+"("+sub_table_schema[i]["type"]+")")) //column data
+          }
+          temp_schema["row"] = temp_schema_row;
+          temp_schema["data"] = temp_schema_data;
+          schema.push(JSON.stringify(temp_schema));
+        }  
         const data = {
+          schema : schema.toString(),
           prompt: promptvalue,
-          type : type,
+          model : type,
         };
         console.log("request data is", data);
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/file/runprompt";
+        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/runprompt"; 
         await axios
           .post(apiUrl, data)
           .then((response) => {
-            if (response.status == 200) {
-              const reader = response.data.data;
-              const response_query = reader.replace(";","");
-              console.log("response_query is", response_query);
-              setIsSQLQuery(response_query);
-              setIsLoading(true);
-              handleRunQuery(response_query, true);
-            }
+            console.log("response is", response);
+            setIsSQLQuery(response.data);
+            handleRunQuery(response.data, true);
+            setIsLoading(true);
           })
           .catch((error) => {
             console.error("Error:", error.message);
             // Handle the error
           });
       }
+      conn.close();
     } catch (error) {
       console.error("Error:", error);
       setIsRunLoading(true);
@@ -164,6 +195,7 @@ const AIPrompt = (props : any) => {
                 type="text"
                 value={promptvalue}
                 onChange={(e) => {
+                  e.preventDefault();
                   setPromptValue(e.target.value);
                   if (e.target.value == "/") {
                     props.onData(0);
@@ -234,6 +266,7 @@ const AIPrompt = (props : any) => {
                 placeholder=" Paste data here"
                 required
                 onChange={(e) => {
+                  e.preventDefault();
                   setIsSQLQuery(e.currentTarget.value);
                 }}
               ></textarea>
