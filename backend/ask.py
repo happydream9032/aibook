@@ -7,7 +7,7 @@ class QuackingDuck:
     def __init__(self, schema, model):
         self.model = model
         self.schemas = schema
-        openai.api_key = "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"
+        openai.api_key = "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"
 
     def explain_content(self, detail="one sentence"):
         print(self._schema_summary_internal(detail)[1])

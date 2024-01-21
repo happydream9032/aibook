@@ -6,7 +6,7 @@ import { useDuckDb } from "duckdb-wasm-kit";
 import { setgpt3_5, setgpt4, reset } from "@/redux/features/todo-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useDuckDbQuery } from "duckdb-wasm-kit";
-
+import ResultTable from "./resultTable";
 const AIPrompt = (props : any) => {
   const { db , loading, error } = useDuckDb();
   const type = useAppSelector((state) => state.todoReducer.type);
@@ -16,10 +16,13 @@ const AIPrompt = (props : any) => {
   const [promptvalue, setPromptValue] = useState("");
   const [ispromptfinish, setIsPromptFinish] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [tableData, setTableData] = useState({});
   const [isFailuer, setIsFailure] = useState(false);
   const [isLoading, setIsLoading] = useState(false);  // statue get query
   const [isRunLoading, setIsRunLoading] = useState(false); // status get result of run query
   const [isResultData, setResultData] = useState([]);
+  const [tableRowCount, setTableRowCount] = useState(0);
+  const [tableColumnCount, setTableColumnCount] = useState(0);
   const [tabletitle, setTableTitle] = useState<String[]>([]);
   const [isfilename, setIsFileName] = useState("aiprompt");
 
@@ -122,22 +125,45 @@ const AIPrompt = (props : any) => {
       let conn = await db.connect();
       if(data != ""){
         let check_table = await conn.query(data);
-        let row_schemas = check_table.schema.fields;
-        let row_array :Array<String> = [];
-        row_schemas.map((row : any)=>{
-          row_array.push(row["name"]);
+        let output = [...check_table].map((c) =>
+          Object.keys(c).reduce(
+              (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
+              {} as CellInfo
+          )
+        )
+        console.log("check table is", output);
+
+        let header_titles = Object.keys(output[0]);
+        for(let i=0; i<header_titles.length; i++){
+          let temp_header_item = header_titles[i];
+          if(temp_header_item.length > 10){
+            temp_header_item = temp_header_item.slice(0,10) + "...";
+            header_titles[i] = temp_header_item;
+          }
+        }
+        
+        let body_table = [];
+        output.map((item : any, index : number) => { 
+          let body_temp : any = {};
+          body_temp["id"] = index+1;
+          Object.values(item).map((value : any, index1 : number) => {
+            if(String(value).length > 10){
+              let temp_header_item : string = value.slice(0,10) + "...";
+              body_temp[header_titles[index1]] = temp_header_item;
+            } else {
+              body_temp[header_titles[index1]] = String(value);
+            }
+          });
+          body_table.push(body_temp);
         })
 
-        let colume_length_array = check_table._offsets;
-        let column_length = colume_length_array[colume_length_array.length-1];
-        let column_array : any = []
-        for(let i =0; i < Number(column_length); i++){
-          let temp = check_table.get(i).toArray();
-          column_array.push(temp);
+        let json_tabledata : any = {
+          table_header : header_titles, 
+          table_body : body_table
         }
-        console.log("Result is", column_array);
-        setTableTitle(row_array);
-        setResultData(column_array);
+        setTableRowCount(output.length);
+        setTableColumnCount(header_titles.length)
+        setTableData(json_tabledata);
         setIsRunLoading(true);
       }
       conn.close();
@@ -173,7 +199,7 @@ const AIPrompt = (props : any) => {
     <>
       {ispromptfinish ? (
         <div className="mb-5">
-          <div className="w-full px-4 py-2 gap-2 text-indigo-400 font-medium text-lg border rounded-lg ring-1 border-indigo-400 flex items-center justify-between">
+          <div className="w-full px-4 py-2 gap-2 text-indigo-400 font-medium text-lg w-[600px] flex items-center justify-between">
             <div className="items-center gap-3 lg:flex flex-1">
               <svg
                 stroke="currentColor"
@@ -301,47 +327,13 @@ const AIPrompt = (props : any) => {
             {isRunLoading && (
               <div className="w-full">
                 <div className="my-6 w-full flex flex-col overflow-hidden right-1 shadow">
-                  <div className="relative pl-[10px]">
-                    <div className="overflow-auto">
-                      <div
-                        className={
-                          "h-[240px] outline-none overflow-y-auto relative"
-                        }
-                      >
-                        <div className="w-full h-full absolute">
-                          <table className=" bg-white text-sm">
-                            <thead>
-                              <tr className="bg-blue-gray-100 text-gray-700">
-                                {tabletitle.map((item, index) => (
-                                  <th key={index} className="py-3 px-4 text-left">
-                                    {item}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody className="text-blue-gray-900">
-                              {isResultData.map((item, index) => (
-                                <tr
-                                  key={index}
-                                  className="border-b border-blue-gray-200"
-                                >
-                                  {Object.values(item).map((value, index1) => (
-                                    <td key={index1} className="py-3 px-4">
-                                      {value == null ? "" : value}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="relative">
+                  <ResultTable data = {tableData}/>
                   </div>
                   <div className="flex h-[45px] items-center my-">
                     <div className="px-2 w-full flex items-end justify-between">
                       <span className="text-sm text-gray-300">
-                        {isResultData.length} rows × {tabletitle.length} columns
+                        {tableRowCount} rows × {tableColumnCount} columns
                       </span>
                     </div>
                   </div>
@@ -436,7 +428,7 @@ const AIPrompt = (props : any) => {
         </div>
       ) : (
         <input
-          className="text-lg text-indigo-500 font-semibold w-full border border-transparent focus:outline-none"
+          className="text-lg text-indigo-500 font-semibold w-[600px] border border-transparent focus:outline-none"
           type="text"
           value={promptvalue}
           placeholder="Ask AI to write SQL for you"
