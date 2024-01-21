@@ -5,6 +5,10 @@ import Papa from 'papaparse';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDuckDb } from "duckdb-wasm-kit";
+import { exportCsv } from "duckdb-wasm-kit";
+import { exportArrow } from "duckdb-wasm-kit";
+import { exportParquet } from "duckdb-wasm-kit";
+import ResultTable from "./resultTable";
 
 const RunSQL = (props : any) => {
   const { db , loading, error } = useDuckDb();
@@ -12,11 +16,11 @@ const RunSQL = (props : any) => {
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
   const [isSQLQuery, setIsSQLQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isFailureStatus, setIsFailureStatus] = useState(false);
-  const [isFailureValue, setIsFailureValue] = useState("")
-  const [isResultData, setResultData] = useState([]);
-  const [tabletitle, setTableTitle] = useState<String[]>([]);
   const [isfilename, setIsFileName] = useState("table");
+  const [tableData, setTableData] = useState({});
+  const [exportFileName,setExportFileName] = useState("sql");
+  const [tableRowCount, setTableRowCount] = useState(0);
+  const [tableColumnCount, setTableColumnCount] = useState(0);
 
   const handleRunQuery = async () => {
     let conn = await db.connect();
@@ -24,22 +28,46 @@ const RunSQL = (props : any) => {
     try {
       if(isSQLQuery != ""){
         let check_table = await conn.query(isSQLQuery);
-        let row_schemas = check_table.schema.fields;
-        let row_array :Array<String> = [];
-        row_schemas.map((row : any)=>{
-          row_array.push(row["name"]);
+
+        let output = [...check_table].map((c) =>
+          Object.keys(c).reduce(
+              (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
+              {} as CellInfo
+          )
+        )
+        console.log("check table is", output);
+
+        let header_titles = Object.keys(output[0]);
+        for(let i=0; i<header_titles.length; i++){
+          let temp_header_item = header_titles[i];
+          if(temp_header_item.length > 10){
+            temp_header_item = temp_header_item.slice(0,10) + "...";
+            header_titles[i] = temp_header_item;
+          }
+        }
+        
+        let body_table = [];
+        output.map((item : any, index : number) => { 
+          let body_temp : any = {};
+          body_temp["id"] = index+1;
+          Object.values(item).map((value : any, index1 : number) => {
+            if(String(value).length > 10){
+              let temp_header_item : string = value.slice(0,10) + "...";
+              body_temp[header_titles[index1]] = temp_header_item;
+            } else {
+              body_temp[header_titles[index1]] = String(value);
+            }
+          });
+          body_table.push(body_temp);
         })
 
-        let colume_length_array = check_table._offsets;
-        let column_length = colume_length_array[colume_length_array.length-1];
-        let column_array : any = []
-        for(let i =0; i < Number(column_length); i++){
-          let temp = check_table.get(i).toArray();
-          column_array.push(temp);
+        let json_tabledata : any = {
+          table_header : header_titles, 
+          table_body : body_table
         }
-        console.log("Result is", column_array);
-        setTableTitle(row_array);
-        setResultData(column_array);
+        setTableRowCount(output.length);
+        setTableColumnCount(header_titles.length)
+        setTableData(json_tabledata);
         setIsLoading(true);
       }
     } catch (error) {
@@ -50,7 +78,7 @@ const RunSQL = (props : any) => {
   };
   
   const downloadCSV = () => { 
-    const csvData = Papa.unparse(isResultData);
+    const csvData = Papa.unparse(tableData.table_body);
     // Creating a Blob for having a csv file format  
     // and passing the data with type 
     const blob = new Blob([csvData], { type: 'text/csv' }); 
@@ -70,12 +98,12 @@ const RunSQL = (props : any) => {
   
     // Performing a download with click 
     a.click() 
-  } 
+} 
 
   return (
     <div className="flex flex-col">
       <ToastContainer />
-      <div className="ma-[3px] my-6 flex flex-col rounded-lg border border-indigo-700 shadow">
+      <div className="ma-[3px] my-6 flex flex-col w-[600px] rounded-lg border border-indigo-700 shadow">
         <div className="w-full relative pr-20 px-2 py-3 pl-4 bg-black min-h-[110px]">
           <textarea
             id="comment"
@@ -118,47 +146,14 @@ const RunSQL = (props : any) => {
         {isLoading && (
           <div className="w-full">
             <div className="my-6 w-full flex flex-col overflow-hidden right-1 shadow">
-              <div className="relative pl-[10px]">
-                <div className="overflow-auto">
-                  <div
-                    className={
-                      "h-[240px] outline-none overflow-y-auto relative"
-                    }
-                  >
-                    <div className="w-full h-full absolute">
-                      <table className=" bg-white text-sm">
-                        <thead>
-                          <tr className="bg-blue-gray-100 text-gray-700">
-                            {tabletitle.map((item, index) => (
-                              <th key={index} className="py-3 px-4 text-left">
-                                {item}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="text-blue-gray-900">
-                          {isResultData.map((item, index) => (
-                            <tr
-                              key={index}
-                              className="border-b border-blue-gray-200"
-                            >
-                              {Object.values(item).map((value, index1) => (
-                                <td key={index1} className="py-3 px-4">
-                                  {value == null ? "" : value}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
+              <div className="relative">
+                <ResultTable data = {tableData}/>
               </div>
               <div className="flex h-[45px] items-center my-">
-                <div className="px-2 w-full flex items-end justify-between">
+                <div className="px-2 w-full flex items-center justify-between">
+                <input className="flex-1 text-sm text-gray-500 border border-transparent focus:outline-none" value = {exportFileName} onChange={(e)=>{e.preventDefault(); setExportFileName(e.currentTarget.value)}}></input>
                   <span className="text-sm text-gray-300">
-                    {isResultData.length} rows × {tabletitle.length} columns
+                    {tableRowCount} rows × {tableColumnCount} columns
                   </span>
                 </div>
               </div>

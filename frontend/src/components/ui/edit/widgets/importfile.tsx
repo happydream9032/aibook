@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Papa from 'papaparse';
 import axios from "axios";
+import { tableFromIPC } from 'apache-arrow'
 import TypingComponent from "./input";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { insertFile } from "duckdb-wasm-kit";
 import { exportCsv } from "duckdb-wasm-kit";
 import { exportArrow } from "duckdb-wasm-kit";
 import { exportParquet } from "duckdb-wasm-kit";
+import ResultTable from "./resultTable";
 
 const Importfile = (props : any) => {
   const { db , loading, error } = useDuckDb();
@@ -21,11 +23,12 @@ const Importfile = (props : any) => {
   const [isloading2, setIsLoading2] = useState(false);
   const [isfetchurl, setIsFetchUrl] = useState("");
   const [istableshow, setIsTableShow] = useState(false);
-  const [tableheader, setTableHeader] = useState<String[]>([]);
-  const [tableData, setTableData] = useState([]);
+  const [tableheader, setTableHeader] = useState([]);
+  const [tableRowCount, setTableRowCount] = useState(0);
+  const [tableColumnCount, setTableColumnCount] = useState(0);
+  const [tableData, setTableData] = useState({});
   const [tabletitle, setTableTitle] = useState("");
   const [exportFileName,setExportFileName] = useState("");
-  const [isShowLess, setIsShowLess] = useState(true);
   const [isstringtabledata, setIsStringTableData] = useState("");
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
   
@@ -47,23 +50,46 @@ const Importfile = (props : any) => {
 
       await insertFile(db, csvfile ,table_name);
       let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
-    
-      let row_schemas = check_table.schema.fields;
-      let row_array :Array<String> = [];
-      row_schemas.map((row : any)=>{
-        row_array.push(row["name"]);
+      
+      let output = [...check_table].map((c) =>
+        Object.keys(c).reduce(
+            (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
+            {} as CellInfo
+        )
+      )
+      console.log("check table is", output);
+
+      let header_titles = Object.keys(output[0]);
+      for(let i=0; i<header_titles.length; i++){
+        let temp_header_item = header_titles[i];
+        if(temp_header_item.length > 10){
+          temp_header_item = temp_header_item.slice(0,10) + "...";
+          header_titles[i] = temp_header_item;
+        }
+      }
+      
+      let body_table = [];
+      output.map((item : any, index : number) => { 
+        let body_temp : any = {};
+        body_temp["id"] = index+1;
+        Object.values(item).map((value : any, index1 : number) => {
+          if(String(value).length > 10){
+            let temp_header_item : string = value.slice(0,10) + "...";
+            body_temp[header_titles[index1]] = temp_header_item;
+          } else {
+            body_temp[header_titles[index1]] = String(value);
+          }
+        });
+        body_table.push(body_temp);
       })
 
-      let colume_length_array = check_table._offsets;
-      let column_length = colume_length_array[colume_length_array.length-1];
-
-      let column_array : any = []
-      for(let i =0; i < Number(column_length); i++){
-        let temp = check_table.get(i).toArray();
-        column_array.push(temp);
+      let json_tabledata : any = {
+        table_header : header_titles, 
+        table_body : body_table
       }
-      setTableHeader(row_array);
-      setTableData(column_array);
+      setTableRowCount(output.length);
+      setTableColumnCount(header_titles.length)
+      setTableData(json_tabledata);
       setTableTitle(table_name);
       setExportFileName(table_name);
       setIsTableShow(true);
@@ -107,17 +133,10 @@ const Importfile = (props : any) => {
             table_row = rowData[0];
           });
 
-          let csv = table_column.map(row => row.join(',')).join('\n');
+          let csv = table_column.map((row : any) => row.join(',')).join('\n');
           const blob = new Blob([csv], { type: 'text/csv' });
           const file = new File([blob], "data.csv", { type: 'text/csv', lastModified: Date.now() });
           await insertFile(db, file, table_name);
-
-          console.log("Result is", table_column);
-          setTableHeader(table_row);
-          setTableData(table_column);
-          setTableTitle(table_name);
-          setExportFileName(table_name);
-          setIsTableShow(true);
 
       } else if (String(lastElement).includes(".parquet") || String(lastElement).includes(".PARQUET")){
         await conn.query(`CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`);
@@ -125,27 +144,52 @@ const Importfile = (props : any) => {
         await conn.query(`CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`);
       }
 
-      let check_table = await conn.query(`SELECT * FROM ${table_name}`);
-      let row_schemas = check_table.schema.fields;
-      let row_array :Array<String> = [];
-      row_schemas.map((row : any)=>{
-        row_array.push(row["name"]);
+      let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
+      
+      let output = [...check_table].map((c) =>
+        Object.keys(c).reduce(
+            (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
+            {} as CellInfo
+        )
+      )
+      console.log("check table is", output);
+      let sub_table_schema = check_table.schema.fields;
+
+      let header_titles = Object.keys(output[0]);
+      for(let i=0; i<header_titles.length; i++){
+        let temp_header_item = header_titles[i];
+        if(temp_header_item.length > 10){
+          temp_header_item = temp_header_item.slice(0,10) + "...";
+          header_titles[i] = temp_header_item;
+        }
+      }
+      
+      let body_table = [];
+      output.map((item : any, index : number) => { 
+        let body_temp : any = {};
+        body_temp["id"] = index+1;
+        Object.values(item).map((value : any, index1 : number) => {
+          if(String(value).length > 10){
+            let temp_header_item : string = value.slice(0,10) + "...";
+            body_temp[header_titles[index1]] = temp_header_item;
+          } else {
+            body_temp[header_titles[index1]] = String(value);
+          }
+        });
+        body_table.push(body_temp);
       })
 
-      let colume_length_array = check_table._offsets;
-      let column_length = colume_length_array[colume_length_array.length-1];
-      let column_array : any = []
-      for(let i =0; i < Number(column_length); i++){
-        let temp = check_table.get(i).toArray();
-        column_array.push(temp);
+      let json_tabledata : any = {
+        table_header : header_titles, 
+        table_body : body_table
       }
-      console.log("Result is", column_array);
-      setTableHeader(row_array);
-      setTableData(column_array);
+      setTableRowCount(output.length);
+      setTableColumnCount(header_titles.length)
+      setTableData(json_tabledata);
       setTableTitle(table_name);
       setExportFileName(table_name);
       setIsTableShow(true);
-      
+
       conn.close();
     }
   };
@@ -177,23 +221,48 @@ const Importfile = (props : any) => {
       const file = new File([blob], "data"+String(table_count)+".csv", { type: 'text/csv', lastModified: Date.now() });
       await insertFile(db, file, table_name);
 
-      let check_table = await conn.query(`SELECT * FROM ${table_name}`);
-      let row_schemas = check_table.schema.fields;
-      let row_array :Array<String> = [];
-      row_schemas.map((row : any)=>{
-        row_array.push(row["name"]);
+      let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
+      
+      let output = [...check_table].map((c) =>
+        Object.keys(c).reduce(
+            (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
+            {} as CellInfo
+        )
+      )
+      console.log("check table is", output);
+      let sub_table_schema = check_table.schema.fields;
+
+      let header_titles = Object.keys(output[0]);
+      for(let i=0; i<header_titles.length; i++){
+        let temp_header_item = header_titles[i];
+        if(temp_header_item.length > 10){
+          temp_header_item = temp_header_item.slice(0,10) + "...";
+          header_titles[i] = temp_header_item;
+        }
+      }
+      
+      let body_table = [];
+      output.map((item : any, index : number) => { 
+        let body_temp : any = {};
+        body_temp["id"] = index+1;
+        Object.values(item).map((value : any, index1 : number) => {
+          if(String(value).length > 10){
+            let temp_header_item : string = value.slice(0,10) + "...";
+            body_temp[header_titles[index1]] = temp_header_item;
+          } else {
+            body_temp[header_titles[index1]] = String(value);
+          }
+        });
+        body_table.push(body_temp);
       })
 
-      let colume_length_array = check_table._offsets;
-      let column_length = colume_length_array[colume_length_array.length-1];
-      let column_array : any = []
-      for(let i =0; i < Number(column_length); i++){
-        let temp = check_table.get(i).toArray();
-        column_array.push(temp);
+      let json_tabledata : any = {
+        table_header : header_titles, 
+        table_body : body_table
       }
-      console.log("Result is", column_array);
-      setTableHeader(row_array);
-      setTableData(column_array);
+      setTableRowCount(output.length);
+      setTableColumnCount(header_titles.length)
+      setTableData(json_tabledata);
       setTableTitle(table_name);
       setExportFileName(table_name);
       setIsTableShow(true);
@@ -246,71 +315,16 @@ const Importfile = (props : any) => {
     <div>
       {istableshow ? (
         <div
-          className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-400 right-1 shadow"
+          className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-700 w-[600px] right-1 shadow"
           contentEditable={false}
         >
-          <div className="relative pl-[10px]">
-            <div className=" pointer-events-none absolute bottom-0 flex h-[80px] w-full items-end justify-center">
-              <button
-                className="px-3 inline-block w-auto relative shadow-sm bg-white text-indigo-500 hover:bg-gray-50 border border-gray-600 rounded-md pointer-events-auto z-[2] m-7"
-                type="button"
-                onClick={() => {
-                  setIsShowLess(!isShowLess);
-                }}
-              >
-                <div className="flex items-center justify-center h-full overflow-visible">
-                  {isShowLess ? (
-                    <span className="h-full overflow-hidden flex items-center">
-                      Show more
-                    </span>
-                  ) : (
-                    <span className="h-full overflow-hidden flex items-center">
-                      Show less
-                    </span>
-                  )}
-                </div>
-              </button>
-              <div className=" absolute w-full h-full bg-white opacity-50 z-[1]"></div>
-            </div>
-            <div className="overflow-auto">
-              <div
-                className={`${
-                  isShowLess ? "h-[250px] " : "h-[420px] "
-                } outline-none overflow-y-auto relative`}
-              >
-                <div className="w-full h-full absolute">
-                  <table className=" bg-white text-sm">
-                    <thead>
-                    <tr className="bg-blue-gray-100 text-gray-700">
-                      {tableheader && 
-                      tableheader.map((header, index) => <th key={index} className="py-3 px-4 text-left">{header}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody className="text-blue-gray-900">
-                      {tableData.map((item : any, index) => (
-                        <tr
-                          key={index}
-                          className="border-b border-blue-gray-200"
-                        >
-                          {item.map((value : String, index1 : any) => (
-                            <td key={index1} className="py-3 px-4">
-                              {value == "null" ? "" : value}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ResultTable data = {tableData}/>
           <div className="flex h-[45px] items-center my-2">
             <div className="px-2 w-full flex items-center justify-between">
-              <input className="flex-1 text-sm text-gray-500 border border-transparent focus:outline-none" value = {exportFileName} onChange={(e)=>{setExportFileName(e.currentTarget.value)}}></input>
+              <input className="flex-1 text-sm text-gray-500 border border-transparent focus:outline-none" value = {exportFileName} onChange={(e)=>{e.preventDefault(); setExportFileName(e.currentTarget.value)}}></input>
               <div className="items-center gap-3 lg:flex">
                 <span className="text-sm text-gray-300">
-                  {tableData.length} rows × {tableheader.length} columns
+                  {tableRowCount} rows × {tableColumnCount} columns
                 </span>
                 <div className="relative inline-block">
                 <button
@@ -401,7 +415,7 @@ const Importfile = (props : any) => {
         <div data-node-view-wrapper="">
           {isValue ? (
             <div className="select-none flex flex-col">
-              <div className="ma-[3px] not-prose my-6 flex flex-col overflow-hidden rounded-lg border border-indigo-700 shadow">
+              <div className="ma-[3px] not-prose my-6 flex flex-col overflow-hidden w-[600px] rounded-lg border border-indigo-700 shadow">
                 <div className="w-full flex justify-between">
                   <div
                     className="min-w-[180px] bg-gray-100 p-4 flex flex-col justify-start"
@@ -548,6 +562,7 @@ const Importfile = (props : any) => {
                             id="file"
                             className="sr-only"
                             onChange={(e) => {
+                              e.preventDefault();
                               handleFileChange(e);
                               setIsLoading1(true);
                             }}
@@ -612,12 +627,14 @@ const Importfile = (props : any) => {
                               type="text"
                               placeholder=" Paste a URL to a file"
                               onChange={(e) => {
+                                e.preventDefault();
                                 setIsFetchUrl(e.currentTarget.value);
                               }}
                             />
                             <button
                               className="ml-2 bg-indigo-600 text-sm text-white py-2 px-7 rounded-md"
                               onClick={(e) => {
+                                e.preventDefault();
                                 handleFetchUrl();
                                 setIsLoading2(true);
                               }}
@@ -676,7 +693,7 @@ const Importfile = (props : any) => {
                             className="px-2 py-2 w-full h-full resize-none text-sm rounded-md text-gray-900 bg-white border border-gray-400 hover:border-indigo-400 focus:ring-0"
                             placeholder=" Paste data here"
                             required
-                            onChange={(e)=>{setIsStringTableData(e.currentTarget.value); handlePasteTable(e.currentTarget.value)}}
+                            onChange={(e)=>{e.preventDefault(); setIsStringTableData(e.currentTarget.value); handlePasteTable(e.currentTarget.value)}}
                           ></textarea>
                         </div>
                         <span className="text-sm text-gray-400">
