@@ -16,10 +16,7 @@ def runprompt():
     prompt = data["prompt"]
     model_type = data["model"]
 
-    if model_type == True:
-        model = "gpt-3.5-turbo"
-    else:
-        model = "gpt-4-1106-preview"
+    model = "gpt-3.5-turbo"
 
     quack = QuackingDuck(schema, model)
     quack.explain_content()
