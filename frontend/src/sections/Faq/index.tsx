@@ -85,7 +85,7 @@ const Faq = () => {
                   <p className="text-base leading-7 text-gray-300">
                     Data files you import (such as CSV or Parquet) are
                     compressed and stored in your browsers IndexedDB storage.
-                    <br /> No data is stored on Duckbooks servers.
+                    <br /> No data is stored on DataBooks servers.
                   </p>
                 </div>
               </div>
@@ -143,11 +143,11 @@ const Faq = () => {
               >
                 <div className="overflow-hidden">
                   <p className="text-base leading-7 text-gray-300">
-                    If you don&#39;t use Duckbook&#39;s AI features, no data
+                    If you don&#39;t use DataBook&#39;s AI features, no data
                     leaves your browser. If you do use AI, your dataset schema
                     (column names and types) and a small number of example
                     values (&lt; 10 per column) are sent to OpenAI, and subject
-                    to their{" "}
+                    to their&nbsp;
                     <a
                       href="https://openai.com/policies/api-data-usage-policies/"
                       className="text-blue-600 hover:underline dark:text-blue-500"
@@ -215,10 +215,10 @@ const Faq = () => {
               >
                 <div className="overflow-hidden">
                   <p className="text-base leading-7 text-gray-300">
-                    All Duckbook data lives on your local computer, and can be
+                    All DataBook data lives on your local computer, and can be
                     deleted at any time. Deleting a single doc will delete any
                     associated files from your browser. Or you can purge all
-                    Duckbook data from your settings page.
+                    DataBook data from your settings page.
                   </p>
                 </div>
               </div>
@@ -296,7 +296,7 @@ const Faq = () => {
                   aria-controls={`accordion-text-0`}
                 >
                   <span className="text-base text-white font-semibold leading-7">
-                    Is Duckbook free?
+                    Is DataBook free?
                   </span>
                   <svg
                     className="ml-8 shrink-0 fill-white"
@@ -356,7 +356,7 @@ const Faq = () => {
                   aria-controls={`accordion-text-0`}
                 >
                   <span className="text-base text-white font-semibold leading-7">
-                    Which AI model does Duckbook use?
+                    Which AI model does DataBook use?
                   </span>
                   <svg
                     className="ml-8 shrink-0 fill-white"
@@ -456,30 +456,30 @@ const Faq = () => {
               >
                 <div className="overflow-hidden">
                   <p className="text-base leading-7 text-gray-300">
-                    No, I&#39;m an{" "}
+                    No, I&#39;m an&nbsp;
                     <a
                       href="https://www.linkedin.com/in/mattholden1/"
                       className="text-blue-600 hover:underline dark:text-blue-500"
                     >
                       independent developer
-                    </a>{" "}
-                    and DuckDB fanboy building a fun product I want to use.
-                    It&#39;s only possible because DuckDB is incredibly fast —
-                    check it out{" "}
+                    </a>
+                    &nbsp; and DuckDB fanboy building a fun product I want to
+                    use. It&#39;s only possible because DuckDB is incredibly
+                    fast — check it out&nbsp;
                     <a
                       href="https://duckdb.org/"
                       className="text-blue-600 hover:underline dark:text-blue-500"
                     >
                       here
-                    </a>{" "}
-                    here and{" "}
+                    </a>
+                    &nbsp; here and&nbsp;
                     <a
                       href="https://github.com/duckdb/duckdb"
                       className="text-blue-600 hover:underline dark:text-blue-500"
                     >
                       star them
-                    </a>{" "}
-                    on Github if you dig it.
+                    </a>
+                    &nbsp; on Github if you dig it.
                   </p>
                 </div>
               </div>
@@ -537,14 +537,14 @@ const Faq = () => {
               >
                 <div className="overflow-hidden">
                   <p className="text-base leading-7 text-gray-300">
-                    We love feedback! You can reach out on{" "}
+                    We love feedback! You can reach out on&nbsp;
                     <a
                       href="https://twitter.com/holdenmatt"
                       className="text-blue-600 hover:underline dark:text-blue-500"
                     >
                       Twitter
-                    </a>{" "}
-                    or email us at{" "}
+                    </a>
+                    &nbsp; or email us at&nbsp;
                     <a
                       href="mailto:help@duckbook.ai?subject=Dynamic%20Subject&body=Dynamic%20Body"
                       className="text-blue-600 hover:underline dark:text-blue-500"

@@ -30,7 +30,7 @@ const SignUp = () => {
               <br />
             </span>
             <span className="text-base font-bold text-gray-400 md:text-lg mb-10">
-              to continue to Duckbook
+              to continue to DataBook
             </span>
             <button className="mb-6 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary">
               <span className="mr-3">
@@ -137,7 +137,7 @@ const SignUp = () => {
               <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">
                 <div className="mantine-Group-root gap-4 font-medium mantine-k3ov3c">
                   <p className="text-sm font-light text-gray-600">
-                    Have an account?{" "}
+                    Have an account?&nbsp;
                     <a
                       href="/sign-in"
                       className="font-medium text-indigo-500 hover:underline"

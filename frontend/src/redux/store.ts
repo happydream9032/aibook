@@ -1,7 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import todoReducer from "./features/todo-slice";
+import navbarReducer from "./features/navbar-slice";
+import navbarlistReducer from './features/navbarlist-slice';
 export const store = configureStore({
-  reducer: {todoReducer},
+  reducer: {todoReducer, navbarReducer, navbarlistReducer},
   devTools: process.env.NODE_ENV !== "production",
 });
 

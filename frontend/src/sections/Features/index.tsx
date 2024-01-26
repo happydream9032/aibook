@@ -13,7 +13,8 @@ const Features = () => {
               You own your data
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Duckbook combines two powerful technologies: DuckDB &amp; GPT-4.{" "}
+              DataBook combines two powerful technologies: DuckDB &amp;
+              GPT-4.&nbsp;
               <br />
               But <i>you</i> own your data — it lives on your machine, not on
               our servers.
@@ -45,10 +46,10 @@ const Features = () => {
                       href="https://duckdb.org/"
                     >
                       DuckDB
-                    </Link>{" "}
-                    is a lightning fast analytics database that can run almost
-                    anywhere, including in your browser. Crunch millions of rows
-                    instantly, with nothing to install or maintain.
+                    </Link>
+                    &nbsp; is a lightning fast analytics database that can run
+                    almost anywhere, including in your browser. Crunch millions
+                    of rows instantly, with nothing to install or maintain.
                   </p>
                 </dd>
               </div>
@@ -103,21 +104,22 @@ const Features = () => {
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-700 ">
                   <p className="flex-auto text-sm sm:text-base">
-                    All data is stored{" "}
+                    All data is stored&nbsp;
                     <Link
                       className="text-indigo-400"
                       target="_blank"
                       href="https://www.inkandswitch.com/local-first/"
                     >
                       locally
-                    </Link>{" "}
+                    </Link>
+                    &nbsp;
                     <b>in your browser</b>, and is not sent to or stored on
-                    Duckbook servers. If you use AI, a small amount of data is
-                    sent to OpenAI. See our{" "}
+                    DataBook servers. If you use AI, a small amount of data is
+                    sent to OpenAI. See our&nbsp;
                     <a className="text-indigo-400" href="/#faq">
                       FAQ
-                    </a>{" "}
-                    for more details.
+                    </a>
+                    &nbsp; for more details.
                   </p>
                 </dd>
               </div>
