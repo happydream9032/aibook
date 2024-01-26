@@ -12,7 +12,7 @@ const Header = () => {
               The DuckDB notebook
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-300">
-              Duckbook is an AI-powered SQL notebook that runs in your browser.
+              DataBook is an AI-powered SQL notebook that runs in your browser.
               Use DuckDB and GPT-4 to explore and visualize data remarkably
               fast.
             </p>

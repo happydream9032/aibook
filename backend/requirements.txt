@@ -3,3 +3,5 @@ tabulate
 openai==0.28
 flask
 flask_cors
+python-dotenv
+flask-mysqldb

@@ -3,6 +3,13 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession, signIn } from "next-auth/react";
+
+type WindowWithDataLayer = Window & {
+  dataLayer: Record<string, any>[];
+};
+declare const window: WindowWithDataLayer;
+
 const SignIn = () => {
   const router = useRouter();
 
@@ -25,9 +32,18 @@ const SignIn = () => {
               <br />
             </span>
             <span className="text-base font-bold text-gray-400 md:text-lg ">
-              to continue to Duckbook
+              to continue to DataBook
             </span>
-            <button className="mb-10 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary">
+            <button
+              className="mb-10 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary"
+              onClick={() => {
+                window.dataLayer.push({
+                  event: "google_login",
+                  google_logins: 1,
+                });
+                signIn("google");
+              }}
+            >
               <span className="mr-3">
                 <svg
                   width="20"
@@ -92,7 +108,7 @@ const SignIn = () => {
               <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">
                 <div className="mantine-Group-root gap-4 font-medium mantine-k3ov3c">
                   <p className="text-sm font-light text-gray-600">
-                    No Account?{" "}
+                    No Account?&nbsp;
                     <a
                       href="/sign-up"
                       className="font-medium text-indigo-500 hover:underline"

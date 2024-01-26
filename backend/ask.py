@@ -1,13 +1,16 @@
 import os
 import openai
 import duckdb
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class QuackingDuck:
 
     def __init__(self, schema, model):
         self.model = model
         self.schemas = schema
-        openai.api_key = "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"
+        openai.api_key = os.getenv('OPEN_API_KEY')
 
     def explain_content(self, detail="one sentence"):
         print(self._schema_summary_internal(detail)[1])
@@ -31,7 +34,7 @@ class QuackingDuck:
     def _generate_sql(self, question, debug=False):
         (summary_prompt, summary) = self._schema_summary_internal()
         sql_prompt = f"""Output a single SQL query without any explanation and do not add anything to the query that was not part of the question. Only if the question is not realted to the data in the database, answer with "I don't know".
-            In SQL query, only the name of table is will be start with `'` and end `'` and it will be include '.csv', '.parquet' or '.arrow'. Write a only SQL query data without any other symbol, text or description such as ``` or ```sql from this prompt.
+            In SQL query, only the name of table is will be start with `'` and end `'` and it will be include '.csv', '.parquet' or '.arrow'. And the name of each column couldn't start and end with `'`. Write a only SQL query data without any other symbol, text or description such as ``` or ```sql from this prompt.
             Make sure to only use tables and columns from the schema above and write a query to answer the following question:
             "{question}"
             """

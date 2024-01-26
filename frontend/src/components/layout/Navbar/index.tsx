@@ -45,7 +45,7 @@ const Navbar = () => {
             height={48}
             className="w-auto"
           />
-          <span className="text-sm font-semibold text-white">Duckbook.ai</span>
+          <span className="text-sm font-semibold text-white">DataBook.ai</span>
         </Link>
         <ul className="hidden items-center gap-12 lg:flex">
           {links.map((link) => (
