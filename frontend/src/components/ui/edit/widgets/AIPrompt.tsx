@@ -35,23 +35,23 @@ const AIPrompt = (props: {
 
   useEffect(() => {
     let type = props.type;
-    // if (type.type === 4 && type.value != "") {
-    //   let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
-    //   let json_tabledata: any = {
-    //     db: props.db,
-    //     type: type.type,
-    //     isPrompt: type.value,
-    //     index: props.index,
-    //     isfilename: type.path.filepath,
-    //     isSQLQuery: isSQLQuery,
-    //     istablename: type.path.table_name,
-    //   };
-    //   console.log("current db is", json_tabledata);
-    //   setTableData(json_tabledata);
-    //   setIsSQLQuery(type.value);
-    //   handleRunQuery(type.value, true);
-    //   setIsLoading(true);
-    // }
+    if (type.type === 4 && type.value != "") {
+      let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
+      let json_tabledata: any = {
+        db: props.db,
+        type: type.type,
+        isPrompt: type.value,
+        index: props.index,
+        isfilename: type.path.filepath,
+        isSQLQuery: isSQLQuery,
+        istablename: type.path.table_name,
+      };
+      console.log("current db is", json_tabledata);
+      setTableData(json_tabledata);
+      setIsSQLQuery(type.value);
+      handleRunQuery(type.value, true);
+      setIsLoading(true);
+    }
   }, []);
 
   function handleKeyDown(event: any) {
@@ -116,6 +116,7 @@ const AIPrompt = (props: {
           }
           temp_schema["row"] = temp_schema_row;
           temp_schema["data"] = temp_schema_data;
+          console.log(schema, temp_schema);
           schema.push(JSON.stringify(temp_schema));
         }
         const data = {
@@ -134,13 +135,13 @@ const AIPrompt = (props: {
             setIsLoading(true);
           })
           .catch((error) => {
-            console.error("Error:", error.message);
+            console.error("Error12:", error.message);
             // Handle the error
           });
       }
       conn.close();
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error11:", error);
       setIsRunLoading(true);
       setIsFailure(true);
     }
@@ -166,7 +167,7 @@ const AIPrompt = (props: {
       setTableData(json_tabledata);
       setIsRunLoading(true);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error13:", error);
       setIsRunLoading(true);
       setIsFailure(true);
     }
@@ -195,7 +196,7 @@ const AIPrompt = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed1", error);
       }
     } else if (type == 1) {
       let filename = original_filename + ".parquet";
@@ -217,7 +218,7 @@ const AIPrompt = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed2", error);
       }
     } else if (type == 2) {
       let filename = original_filename + ".arrow";
@@ -249,7 +250,7 @@ const AIPrompt = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed3", error);
       }
     }
     conn.close();
@@ -273,7 +274,7 @@ const AIPrompt = (props: {
         console.log("update response is", response.data);
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error15:", error.message);
         // Handle the error
       });
   };

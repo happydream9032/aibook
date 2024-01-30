@@ -52,6 +52,8 @@
 		"eslint-config-next": "13.5.2",
 		"file-saver": "^2.0.5",
 		"fs": "^0.0.1-security",
+		"idb": "^8.0.0",
+		"indexeddb": "^0.0.0",
 		"json-bufferify": "^0.2.2",
 		"json2csv": "^6.0.0-alpha.2",
 		"lorem-ipsum": "^2.0.8",
@@ -64,6 +66,7 @@
 		"openai": "^4.24.7",
 		"papaparse": "^5.4.1",
 		"parquetjs": "^0.11.2",
+		"path": "^0.12.7",
 		"postcss": "8.4.30",
 		"react": "18.2.0",
 		"react-dom": "18.2.0",
@@ -81,6 +84,7 @@
 		"typescript": "5.2.2"
 	},
 	"devDependencies": {
+		"@types/jquery": "^3.5.29",
 		"@types/papaparse": "^5.3.14",
 		"@types/parquetjs": "^0.10.6",
 		"@types/react-virtualized": "^9.21.29",

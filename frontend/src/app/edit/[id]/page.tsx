@@ -2,10 +2,11 @@
 import axios from "axios";
 import Navbar1 from "@/components/layout/Navbar/navbar";
 import MainPage from "@/components/ui/edit/mainpage";
+import { insertFile } from "duckdb-wasm-kit";
 import { DuckDBConfig } from "@duckdb/duckdb-wasm";
 import { initializeDuckDb } from "duckdb-wasm-kit";
-
 import { useState, useEffect } from "react";
+import { useDuckDb } from "duckdb-wasm-kit";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 export default function Home({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
+  const { db, loading, error } = useDuckDb();
 
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -20,20 +22,62 @@ export default function Home({ params }: { params: { id: string } }) {
   const duckbook = useAppSelector((state) => state.navbarReducer.data);
 
   useEffect(() => {
-    console.log("here is edit page");
+    if (db != null) {
+      InitDuckDB();
+    }
+  }, [db]);
+
+  useEffect(() => {
     const config: DuckDBConfig = {
       query: {
         castBigIntToDouble: true,
       },
     };
     initializeDuckDb({ config, debug: true });
-
-    if (Object.keys(duckbook).length === 0) {
-      router.push("/");
-    } else {
-      getTableData();
-    }
   }, []);
+
+  const InitDuckDB = async () => {
+    try {
+      const myArray = JSON.parse(localStorage.getItem("my-array"));
+      if (myArray == null) {
+        localStorage.setItem("my-array", JSON.stringify([]));
+      } else {
+        await myArray.map(async (item: any, index: number) => {
+          let conn = await db.connect();
+
+          let table_count_query = await conn.query(
+            `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
+          );
+          let table_count_array = table_count_query._offsets;
+          let table_count = table_count_array[table_count_array.length - 1];
+          console.log("Number(table_count) is", Number(table_count));
+          if (Number(table_count) == 0) {
+            let binary = window.atob(item["content"]);
+            let len = binary.length;
+            let bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+
+            const blob = new Blob([bytes]);
+            const file = new File([blob], String(index) + ".parquet", {
+              type: "application/vnd.apache.parquet",
+              lastModified: Date.now(),
+            });
+            console.log("sdfsdfsdfs");
+            await insertFile(db, file, item["title"]);
+          }
+        });
+      }
+      if (Object.keys(duckbook).length === 0) {
+        router.push("/");
+      } else {
+        getTableData();
+      }
+    } catch (error) {
+      console.log("222", error);
+    }
+  };
 
   const setDuckBookDB = async () => {
     let data = {
@@ -69,7 +113,7 @@ export default function Home({ params }: { params: { id: string } }) {
         dispatch(setDuckBookState(final_data[0]));
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error3:", error.message);
         // Handle the error
       });
   };
@@ -111,7 +155,7 @@ export default function Home({ params }: { params: { id: string } }) {
         changeTableData(response.data);
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error4:", error.message);
         // Handle the error
       });
   };

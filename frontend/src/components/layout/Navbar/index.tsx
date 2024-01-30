@@ -25,7 +25,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     const { error } = await supabaseClient.auth.signOut();
     if (error) {
-      console.log(error);
+      console.log("333", error);
     }
   };
 

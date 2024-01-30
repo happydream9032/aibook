@@ -2,25 +2,20 @@
 import axios from "axios";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-import { DuckDBConfig } from "@duckdb/duckdb-wasm";
-import { initializeDuckDb } from "duckdb-wasm-kit";
-
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
 
 export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const duckbook = useAppSelector((state) => state.navbarReducer.data);
 
   useEffect(() => {
-    const config: DuckDBConfig = {
-      query: {
-        castBigIntToDouble: true,
-      },
-    };
-    initializeDuckDb({ config, debug: true });
+    const myArray = JSON.parse(localStorage.getItem("my-array"));
+    if (myArray == null) {
+      localStorage.setItem("my-array", JSON.stringify([]));
+    }
     getTableData();
   }, []);
 
@@ -65,7 +60,7 @@ export default function Home() {
         }
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error1:", error.message);
         // Handle the error
       });
   };
@@ -94,7 +89,7 @@ export default function Home() {
         }
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error2:", error.message);
         // Handle the error
       });
   };

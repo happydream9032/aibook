@@ -43,7 +43,7 @@ const MainPage = (props: { id: number }) => {
         }
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error9:", error.message);
         // Handle the error
       });
   };
@@ -85,7 +85,7 @@ const MainPage = (props: { id: number }) => {
         changeTableData(response.data);
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error10:", error.message);
         // Handle the error
       });
   };

@@ -29,20 +29,20 @@ const RunSQL = (props: {
 
   useEffect(() => {
     let type = props.type;
-    // if (type.type === 2 && type.value != "") {
-    //   let json_tabledata: any = {
-    //     db: props.db,
-    //     type: type.type,
-    //     index: props.index,
-    //     isfilename: type.path.filepath,
-    //     isSQLQuery: type.value,
-    //     istablename: type.path.table_name,
-    //   };
-    //   console.log("current db is", json_tabledata);
-    //   setIsSQLQuery(type.value);
-    //   setTableData(json_tabledata);
-    //   setIsLoading(true);
-    // }
+    if (type.type === 2 && type.value != "") {
+      let json_tabledata: any = {
+        db: props.db,
+        type: type.type,
+        index: props.index,
+        isfilename: type.path.filepath,
+        isSQLQuery: type.value,
+        istablename: type.path.table_name,
+      };
+      console.log("current db is", json_tabledata);
+      setIsSQLQuery(type.value);
+      setTableData(json_tabledata);
+      setIsLoading(true);
+    }
   }, []);
 
   const handleRunQuery = async () => {
@@ -61,7 +61,7 @@ const RunSQL = (props: {
       }
     } catch (error) {
       toast.error("Run SQL Query is Failure", { position: "top-right" });
-      console.error("Error:", error);
+      console.error("Error21:", error);
     }
   };
 
@@ -88,7 +88,7 @@ const RunSQL = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed9", error);
       }
     } else if (type == 1) {
       let filename = original_filename + ".parquet";

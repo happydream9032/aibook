@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 // next components
 import Image from "next/image";
-
+import axios from "axios";
+import { exportCsv } from "duckdb-wasm-kit";
 // custom components
+import fs from "fs";
 import Drawer from "./Drawer";
 import DrawerData from "./DrawerData";
-
+import { useRouter } from "next/navigation";
 // third party components
 import { useDuckDb } from "duckdb-wasm-kit";
 import { setgpt3_5, setgpt4 } from "@/redux/features/todo-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-
+import { exportParquet } from "duckdb-wasm-kit";
+import { insertFile } from "duckdb-wasm-kit";
 // images and icons
 import HamburgerIcon from "@/assets/images/icons/Hamburger.svg";
 import GPT35Icon from "@/assets/images/icons/GPT35.svg";
@@ -20,9 +23,10 @@ import LockIcon from "@/assets/images/icons/LockIcon.svg";
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 
 const Navbar1 = (props: { id: string }) => {
+  const router = useRouter();
   const { db, loading, error } = useDuckDb();
   const type = useAppSelector((state) => state.todoReducer.type);
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
+  const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const dispatch = useAppDispatch();
 
   const [hashData, setHashData] = useState(props.id);
@@ -31,7 +35,8 @@ const Navbar1 = (props: { id: string }) => {
   const [isOpenPrivate, setIsOpenPrivate] = useState(false);
   const [isOpenSetting, setIsOpenSetting] = useState(false);
   const [isSidebarOpen, setIsSideBarOpen] = useState(false);
-  const [fileHandle, setFileHandle] = useState(null);
+  const [isImportedHash, setIsImportedHash] = useState("");
+  const [isExportFileData, setExportFileData] = useState([]);
   const isEnableOverlay: boolean = false;
 
   // Sticky Navbar
@@ -62,34 +67,170 @@ const Navbar1 = (props: { id: string }) => {
     setIsOpenPrivate(false);
     setIsOpenSetting(!isOpenSetting);
   };
+
   const toggleSidebar = () => {
     setIsSideBarOpen(!isSidebarOpen);
   };
-  const closeDropdown = () => {
-    setIsOpenGPTType(isOpenGPTType);
-  };
-  const saveFile = async () => {
-    let conn = await db.connect();
-    conn.query(
-      "EXPORT DATABASE 'new_export.parquet' (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 100000);"
-    );
-    conn.query(".files download new_export.parquet");
 
-    // const opts = {
-    //   types: [
-    //     {
-    //       description: "Files",
-    //     },
-    //   ],
-    // };
-    // const handle = await showSaveFilePicker(opts);
-    // try {
-    //   await db.export(handle.name);
-    //   console.log("DuckDB file exported successfully.");
-    // } catch (err) {
-    //   console.log("Error exporting DuckDB file:", err);
-    // }
-    // setFileHandle(handle);
+  const savingFile = async (blob: any, suggestedName: string) => {
+    // Feature detection. The API needs to be supported
+    const supportsFileSystemAccess =
+      "showSaveFilePicker" in window &&
+      (() => {
+        try {
+          return window.self === window.top;
+        } catch {
+          return false;
+        }
+      })();
+    // If the File System Access API is supported…
+    if (supportsFileSystemAccess) {
+      try {
+        // Show the file save dialog.
+        const handle = await showSaveFilePicker({
+          suggestedName,
+        });
+        // Write the blob to the file.
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        // Fail silently if the user has simply canceled the dialog.
+        if (err.name !== "AbortError") {
+          console.error("error7", err.name, err.message);
+          return;
+        }
+      }
+    }
+  };
+
+  const saveFile = async () => {
+    let result_json = { user_id: "", hash: "", design: "", files: "" };
+    try {
+      let database = JSON.parse(duckbook["DATA"]);
+      let file_contents_array: Array<Object> = [];
+      database.map(async (item: any, index: number) => {
+        let temp_path = item["path"];
+        if (temp_path["table_name"] != "") {
+          let filename = temp_path["table_name"];
+          let file = await exportParquet(db, filename, filename, "zstd");
+          let temp_file: any = { title: "", content: "" };
+          let binary = "";
+          let arrayBuffer = await file.arrayBuffer();
+          let bytes = new Uint8Array(arrayBuffer);
+
+          let len = bytes.byteLength;
+          for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          let result = window.btoa(binary);
+
+          temp_file["title"] = filename;
+          temp_file["content"] = String(result);
+          file_contents_array.push(temp_file);
+          setExportFileData(file_contents_array);
+        }
+      });
+      console.log(isExportFileData);
+      result_json["user_id"] = duckbook["USER_ID"];
+      result_json["hash"] = duckbook["HASH"];
+      result_json["design"] = database;
+      result_json["files"] = JSON.stringify(isExportFileData);
+      let blob = new Blob([JSON.stringify(result_json)], {
+        type: "application/json",
+      });
+      await savingFile(blob, "example.json");
+    } catch (error) {
+      console.error("File download failed", error);
+    }
+  };
+
+  const ImportDatabookFile = async (e: any) => {
+    let databookfile = e.target.files[0];
+    if (databookfile != null) {
+      const reader = new FileReader();
+
+      reader.onload = async function (e: any) {
+        const fileContent = e.target.result;
+        const jsonData = JSON.parse(fileContent);
+        const date = new Date().toJSON();
+        let data = {
+          USER_ID: jsonData["user_id"],
+          TABLE_NAME: "NoTitle",
+          STATUS: 0,
+          DATA: JSON.stringify(jsonData["design"]),
+          CREATED_AT: date,
+          HASH: jsonData["hash"],
+        };
+        console.log(data);
+        setIsImportedHash(jsonData["hash"]);
+
+        let delete_apiUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL + "/importdatabook";
+        await axios
+          .post(delete_apiUrl, data)
+          .then(async (response) => {
+            let file_contents = jsonData["files"];
+
+            if (JSON.parse(file_contents).length > 0) {
+              await JSON.parse(file_contents).map(
+                async (item: any, index: number) => {
+                  console.log("st4", item);
+                  let myArray: any = JSON.parse(
+                    localStorage.getItem("my-array")
+                  );
+                  if (myArray.length == 0) {
+                    let binary = window.atob(item["content"]);
+                    let len = binary.length;
+                    let bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                      bytes[i] = binary.charCodeAt(i);
+                    }
+                    console.log("st6");
+                    const blob = new Blob([bytes]);
+                    const file = new File([blob], String(index) + ".parquet", {
+                      type: "application/vnd.apache.parquet",
+                      lastModified: Date.now(),
+                    });
+                    await insertFile(db, file, item["title"]);
+                    localStorage.setItem("my-array", file_contents);
+                  } else {
+                    myArray.map(async (item1: any, index: number) => {
+                      console.log("Done");
+                      if (item["title"] != item1["title"]) {
+                        let binary = window.atob(item["content"]);
+                        let len = binary.length;
+                        let bytes = new Uint8Array(len);
+                        for (let i = 0; i < len; i++) {
+                          bytes[i] = binary.charCodeAt(i);
+                        }
+                        console.log("st6");
+                        const blob = new Blob([bytes]);
+                        const file = new File(
+                          [blob],
+                          String(index) + ".parquet",
+                          {
+                            type: "application/vnd.apache.parquet",
+                            lastModified: Date.now(),
+                          }
+                        );
+                        await insertFile(db, file, item["title"]);
+                      }
+                    });
+                  }
+                }
+              );
+              router.push(`/edit/${jsonData["hash"]}`);
+            }
+          })
+          .catch((error) => {
+            console.error("Error8:", error.message);
+            // Handle the error
+          });
+      };
+      reader.readAsText(databookfile);
+    }
   };
 
   return (
@@ -284,14 +425,26 @@ const Navbar1 = (props: { id: string }) => {
                         </button>
                       </li>
                       <li role="menuitem">
-                        <button
-                          type="button"
-                          className="w-full justify-center py-3 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
-                        >
-                          <span className="text-sm text-black">
-                            Import DataBook file
-                          </span>
-                        </button>
+                        <div className="flex flex-col justify-center">
+                          <input
+                            type="file"
+                            name="file"
+                            id="file"
+                            className="sr-only"
+                            onChange={(e) => {
+                              e.preventDefault();
+                              ImportDatabookFile(e);
+                            }}
+                          />
+                          <label
+                            htmlFor="file"
+                            className="relative gap-2 flex flex-col py-3 items-center justify-center rounded-md text-center cursor-pointer hover:bg-gray-200"
+                          >
+                            <span className="flex-col text-sm font-medium text-black">
+                              Import Databook file
+                            </span>
+                          </label>
+                        </div>
                       </li>
                       <li role="menuitem">
                         <button

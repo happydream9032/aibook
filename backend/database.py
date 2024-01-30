@@ -20,15 +20,19 @@ class Database:
     myresult = self.mycursor.fetchall()
     return myresult
   
-  def insertDBTableData(self, data):
-    characters = str(data["TABLE_NAME"]) + str(data["USER_ID"]) + "generateTableID"
-    generated_string = ''.join(random.choices(characters, k=22))
-
+  def insertDBTableData(self, data, type):
+    print(">>>>>>>>>>>>>", data, type)
+    if type == True:
+      characters = str(data["TABLE_NAME"]) + str(data["USER_ID"]) + "generateTableID"
+      generated_string = ''.join(random.choices(characters, k=22))
+    else :
+      generated_string = data["HASH"]
     sql = "INSERT INTO tbl_tables (user_id, table_name, status, data, created_at, hash) VALUES (%s, %s, %s, %s, %s, %s)"
     val = (data["USER_ID"], data["TABLE_NAME"], data["STATUS"], data["DATA"], data["CREATED_AT"], generated_string)
     self.mycursor.execute(sql, val)
     self.mydb.commit()
     return generated_string
+
   
   def deleteDBTableData(self, data):
     sql = "DELETE FROM tbl_tables WHERE id = %s"
@@ -57,4 +61,13 @@ class Database:
     val = (data["DATA"], data["ID"])
     self.mycursor.execute(sql, val)
     self.mydb.commit()
+    return data["DATA"]
+
+  def changeUserDatabaseItem(self, data):
+    sql = "UPDATE tbl_users SET database = %s WHERE id = %s"
+    val = (data["DATABASE"], data["ID"])
+    self.mycursor.execute(sql, val)
+    self.mydb.commit()
     return data
+
+  

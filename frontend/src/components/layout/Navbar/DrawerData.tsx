@@ -124,7 +124,7 @@ const DrawerData = ({ id }) => {
         }
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error5:", error.message);
         // Handle the error
       });
   };
@@ -155,7 +155,7 @@ const DrawerData = ({ id }) => {
         }
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error6:", error.message);
         // Handle the error
       });
   };
