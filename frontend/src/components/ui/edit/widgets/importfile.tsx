@@ -1,4 +1,5 @@
 import axios from "axios";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { insertFile } from "duckdb-wasm-kit";
 import { exportArrow } from "duckdb-wasm-kit";
@@ -6,6 +7,9 @@ import ResultTable from "./ResultTable";
 import { exportParquet } from "duckdb-wasm-kit";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { saveFileToIndexedDB, getFileFromIndexedDB } from "@/db/db.models";
+
+import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 
 const Importfile = (props: {
   type: any;
@@ -34,6 +38,7 @@ const Importfile = (props: {
   const [isSQLQuery, setSQLQuery] = useState("");
   const [downloadFileCount, setDownloadFileCount] = useState(0);
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
+  const [isLoadingError, setIsLoadingError] = useState(false);
   const [isTableDBData, setIsTableDBData] = useState({
     table_name: "",
     table_data: null,
@@ -42,23 +47,60 @@ const Importfile = (props: {
 
   useEffect(() => {
     let type = isComponentType;
-    // if (type.type === 11 || type.type === 12 || type.type === 14) {
-    //   let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
-    //   let json_tabledata: any = {
-    //     db: props.db,
-    //     type: type.type,
-    //     index: isComponentNumber,
-    //     isfilename: type.path.filepath,
-    //     isSQLQuery: isSQLQuery,
-    //     istablename: type.path.table_name,
-    //   };
-    //   console.log("current db is", json_tabledata);
-    //   setSQLQuery(isSQLQuery);
-    //   setTableData(json_tabledata);
-    //   setExportFileName(type.path.table_name);
-    //   setIsTableShow(true);
-    // }
-  }, []);
+    if (type.type === 11 || type.type === 12 || type.type === 14) {
+      let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
+      let json_tabledata: any = {
+        db: props.db,
+        type: type.type,
+        index: isComponentNumber,
+        isfilename: type.path.filepath,
+        isSQLQuery: isSQLQuery,
+        istablename: type.path.table_name,
+      };
+      console.log("current db is", json_tabledata);
+      setSQLQuery(isSQLQuery);
+      setTableData(json_tabledata);
+      setExportFileName(type.path.table_name);
+      setIsTableShow(true);
+    }
+  }, [duckbook]);
+
+  const handleLoadingError = (type: boolean) => {
+    setIsLoadingError(type);
+  };
+
+  const getBufferfromFile = async (filename: string) => {
+    try {
+      let myArray: any = JSON.parse(localStorage.getItem("my-array"));
+      let count = 0;
+      myArray.map((item: any, index: number) => {
+        if (item["title"] == filename) {
+          count = count + 1;
+        }
+      });
+      if (count == 0) {
+        let file = await exportParquet(props.db, filename, filename, "zstd");
+        let temp_file: any = { title: "", content: "" };
+        let binary = "";
+        let arrayBuffer = await file.arrayBuffer();
+        let bytes = new Uint8Array(arrayBuffer);
+
+        let len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        let result = window.btoa(binary);
+
+        temp_file["title"] = filename;
+        temp_file["content"] = String(result);
+
+        myArray.push(temp_file);
+        localStorage.setItem("my-array", JSON.stringify(myArray));
+      }
+    } catch (error) {
+      console.error("File download failed6", error);
+    }
+  };
 
   const handleFileChange = async (e: any) => {
     let csvfile = e.target.files[0];
@@ -67,42 +109,24 @@ const Importfile = (props: {
       let conn = await props.db.connect();
 
       let table_count_query = await conn.query(
-        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${csvfile.name}%';`
+        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${csvfile.name}';`
       );
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
 
-      let table_name = csvfile.name;
-      if (Number(table_count) > 0) {
-        table_name = csvfile.name.replace(
-          ".",
-          "(" + String(table_count) + ")."
-        );
+      if (Number(table_count) == 0) {
+        await insertFile(props.db, csvfile, csvfile.name);
       }
-      console.log("table name is", table_name);
+      await getBufferfromFile(csvfile.name);
 
-      await insertFile(props.db, csvfile, table_name);
-
-      // let file = await exportParquet(
-      //   props.db,
-      //   table_name,
-      //   "temp.parquet",
-      //   "zstd"
-      // );
-      // var reader = new FileReader();
-      // reader.onload = function (base64) {
-      //   localStorage["file"] = base64;
-      // };
-      // reader.readAsDataURL(file);
-
-      let query = `SELECT * FROM '${table_name}';`;
+      let query = `SELECT * FROM '${csvfile.name}';`;
       let json_tabledata: any = {
         db: props.db,
         type: 11,
         index: isComponentNumber,
         isfilename: csvfile.name,
         isSQLQuery: query,
-        istablename: table_name,
+        istablename: csvfile.name,
       };
       setSQLQuery(query);
       setTableData(json_tabledata);
@@ -119,76 +143,59 @@ const Importfile = (props: {
       let lastElement = arry[arry.length - 1];
 
       let table_count_query = await conn.query(
-        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${lastElement}%';`
+        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${lastElement}';`
       );
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
 
-      let table_name = lastElement;
-      if (Number(table_count) > 0) {
-        table_name = lastElement.replace(".", "(" + String(table_count) + ").");
-      }
-      console.log("table name is", table_name);
+      if (Number(table_count) == 0) {
+        if (
+          String(lastElement).includes(".csv") ||
+          String(lastElement).includes(".CSV")
+        ) {
+          let table_column: any = [];
+          let table_row: any = [];
 
-      if (
-        String(lastElement).includes(".csv") ||
-        String(lastElement).includes(".CSV")
-      ) {
-        let table_column: any = [];
-        let table_row: any = [];
-
-        await fetch(isfetchurl)
-          .then((response) => response.text())
-          .then((csvText) => {
-            let rowData = [];
-            let array = [];
-            // Split the CSV data into rows
-            rowData = csvText.split("\n");
-            for (let i = 1; i < rowData.length; i++) {
-              let temp = rowData[i].split(",");
-              array.push(temp);
-            }
-            table_column = array;
-            table_row = rowData[0];
+          await fetch(isfetchurl)
+            .then((response) => response.text())
+            .then((csvText) => {
+              let rowData = [];
+              let array = [];
+              // Split the CSV data into rows
+              rowData = csvText.split("\n");
+              for (let i = 1; i < rowData.length; i++) {
+                let temp = rowData[i].split(",");
+                array.push(temp);
+              }
+              table_column = array;
+              table_row = rowData[0];
+            });
+          console.log("--", table_column);
+          let csv = table_column.map((row: any) => row.join(",")).join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const file = new File([blob], "data.csv", {
+            type: "text/csv",
+            lastModified: Date.now(),
           });
-
-        let csv = table_column.map((row: any) => row.join(",")).join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
-        const file = new File([blob], "data.csv", {
-          type: "text/csv",
-          lastModified: Date.now(),
-        });
-        await insertFile(props.db, file, table_name);
-      } else if (
-        String(lastElement).includes(".parquet") ||
-        String(lastElement).includes(".PARQUET")
-      ) {
-        await conn.query(
-          `CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`
-        );
+          await insertFile(props.db, file, table_name);
+        } else if (
+          String(lastElement).includes(".parquet") ||
+          String(lastElement).includes(".PARQUET")
+        ) {
+          await conn.query(
+            `CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`
+          );
+        }
       }
 
-      // let file = await exportParquet(
-      //   props.db,
-      //   table_name,
-      //   "temp.parquet",
-      //   "zstd"
-      // );
-      // var reader = new FileReader();
-      // reader.onload = function (base64) {
-      //   localStorage["file"] = base64;
-      // };
-      // reader.readAsDataURL(file);
-
-      let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
-
+      await getBufferfromFile(lastElement);
       let json_tabledata: any = {
         db: props.db,
         type: 12,
         index: isComponentNumber,
         isfilename: isfetchurl,
-        isSQLQuery: `SELECT * FROM '${table_name}';`,
-        istablename: table_name,
+        isSQLQuery: `SELECT * FROM '${lastElement}';`,
+        istablename: lastElement,
       };
       setTableData(json_tabledata);
       setIsTableShow(true);
@@ -200,45 +207,33 @@ const Importfile = (props: {
     let stringTableData = data;
     if (stringTableData != "") {
       let table_name = "pastTable";
-
       let conn = await props.db.connect();
+
       let table_count_query = await conn.query(
-        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}%';`
+        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}';`
       );
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
 
       if (Number(table_count) > 0) {
-        table_name = "pastTable(" + String(table_count) + ")";
+        let rowData = [];
+        let array = [];
+        // Split the CSV data into rows
+        rowData = stringTableData.split("\n");
+        for (let i = 1; i < rowData.length; i++) {
+          let temp = rowData[i].split("\t");
+          array.push(temp);
+        }
+        let csv = array.map((row) => row.join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const file = new File([blob], "data" + String(count) + ".csv", {
+          type: "text/csv",
+          lastModified: Date.now(),
+        });
+        await insertFile(props.db, file, table_name);
       }
 
-      let rowData = [];
-      let array = [];
-      // Split the CSV data into rows
-      rowData = stringTableData.split("\n");
-      for (let i = 1; i < rowData.length; i++) {
-        let temp = rowData[i].split("\t");
-        array.push(temp);
-      }
-      let csv = array.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const file = new File([blob], "data" + String(table_count) + ".csv", {
-        type: "text/csv",
-        lastModified: Date.now(),
-      });
-      await insertFile(props.db, file, table_name);
-
-      // let file1 = await exportParquet(
-      //   props.db,
-      //   table_name,
-      //   "temp.parquet",
-      //   "zstd"
-      // );
-      // var reader = new FileReader();
-      // reader.onload = function (base64) {
-      //   localStorage.setItem(table_name, base64);
-      // };
-      // reader.readAsDataURL(file1);
+      await getBufferfromFile(table_name);
 
       let check_table = await conn.query(`SELECT * FROM '${table_name}';`);
 
@@ -279,7 +274,7 @@ const Importfile = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed7", error);
       }
     } else if (type == 1) {
       let filename = original_filename + ".parquet";
@@ -301,7 +296,7 @@ const Importfile = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed8", error);
       }
     } else if (type == 2) {
       let filename = original_filename + ".arrow";
@@ -333,7 +328,7 @@ const Importfile = (props: {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (error) {
-        console.error("File download failed", error);
+        console.error("File download failed9", error);
       }
     }
     conn.close();
@@ -357,7 +352,7 @@ const Importfile = (props: {
         console.log("update response is", response.data);
       })
       .catch((error) => {
-        console.error("Error:", error.message);
+        console.error("Error18:", error.message);
         // Handle the error
       });
   };
@@ -379,7 +374,10 @@ const Importfile = (props: {
         >
           {istableshow ? (
             <div className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-700 w-full right-1 shadow">
-              <ResultTable data={tableData} />
+              <ResultTable
+                data={tableData}
+                setEnableButton={(type: boolean) => handleLoadingError(type)}
+              />
               <div className="flex h-[30px] items-center my-2">
                 <div className="px-2 w-full flex items-center justify-between">
                   <input
@@ -400,28 +398,13 @@ const Importfile = (props: {
                         }}
                         title={""}
                       >
-                        <svg
-                          stroke="currentColor"
-                          fill="none"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          height="24"
-                          width="24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            stroke="none"
-                            d="M0 0h24v24H0z"
-                            fill="none"
-                          ></path>
-                          <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                          <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                          <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                        </svg>
+                        <Image
+                          src={MoreViewIcon}
+                          alt=""
+                          width="20"
+                          height="20"
+                        />
                       </button>
-
                       {isSQLDropMenu && (
                         <div className="top-center z-[20] absolute right-0 mt-8 mb-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
                           <ul
@@ -436,43 +419,52 @@ const Importfile = (props: {
                             >
                               Export as ...
                             </li>
-                            <li role="menuitem">
-                              <button
-                                type="button"
-                                className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
-                                onClick={() => {
-                                  downloadFile(0);
-                                }}
-                              >
-                                <span className="text-sm text-black">CSV</span>
-                              </button>
-                            </li>
-                            <li role="menuitem">
-                              <button
-                                type="button"
-                                className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
-                                onClick={() => {
-                                  downloadFile(1);
-                                }}
-                              >
-                                <span className="text-sm text-black">
-                                  Parquet
-                                </span>
-                              </button>
-                            </li>
-                            <li role="menuitem">
-                              <button
-                                type="button"
-                                className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
-                                onClick={() => {
-                                  downloadFile(2);
-                                }}
-                              >
-                                <span className="text-sm text-black">
-                                  Arrow
-                                </span>
-                              </button>
-                            </li>
+                            {isLoadingError ? (
+                              <div></div>
+                            ) : (
+                              <div>
+                                <li role="menuitem">
+                                  <button
+                                    type="button"
+                                    className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                                    onClick={() => {
+                                      downloadFile(0);
+                                    }}
+                                  >
+                                    <span className="text-sm text-black">
+                                      CSV
+                                    </span>
+                                  </button>
+                                </li>
+                                <li role="menuitem">
+                                  <button
+                                    type="button"
+                                    className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                                    onClick={() => {
+                                      downloadFile(1);
+                                    }}
+                                  >
+                                    <span className="text-sm text-black">
+                                      Parquet
+                                    </span>
+                                  </button>
+                                </li>
+                                <li role="menuitem">
+                                  <button
+                                    type="button"
+                                    className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                                    onClick={() => {
+                                      downloadFile(2);
+                                    }}
+                                  >
+                                    <span className="text-sm text-black">
+                                      Arrow
+                                    </span>
+                                  </button>
+                                </li>
+                              </div>
+                            )}
+
                             <li role="menuitem">
                               <button
                                 type="button"
