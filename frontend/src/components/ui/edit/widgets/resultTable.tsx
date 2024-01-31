@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useDuckDb } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
 import { Column, Table } from "react-virtualized";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
@@ -7,11 +8,12 @@ import "react-virtualized/styles.css";
 
 const ResultTable = (props: {
   data: any;
-  setEnableButton: (type: boolean) => void;
+  // setEnableButton: (type: boolean) => void;
 }) => {
+  const { db, loading, error } = useDuckDb();
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
-
+  const [isTableShow, setIsTableShow] = useState(false);
   const [isShowLess, setIsShowLess] = useState(false);
   const [isTableTitle, setTableTitle] = useState([]);
   const [isTableData, setTableData] = useState([]);
@@ -22,6 +24,7 @@ const ResultTable = (props: {
   const [isLoadingError, setIsLoadingError] = useState(false);
 
   useEffect(() => {
+    console.log(props.data);
     gettabledata();
   }, []);
 
@@ -42,7 +45,41 @@ const ResultTable = (props: {
       });
   };
 
+  const setComponetType = async (temp_data: any) => {
+    let array = JSON.parse(temp_data[0][4]);
+    let item = {
+      type: 0,
+      value: "",
+      path: {
+        table_name: "",
+        filepath: "",
+        filesize: "",
+      },
+    };
+    console.log(props.data.type);
+    if (props.data.type === 11) {
+      item["value"] = "";
+    } else if (props.data.type === 12) {
+      item["value"] = "";
+    } else if (props.data.type === 13) {
+      item["value"] = "";
+    } else if (props.data.type === 2) {
+      item["value"] = props.data.isSQLQuery;
+    } else if (props.data.type === 4) {
+      item["value"] = props.data.isPrompt;
+    }
+    item["type"] = props.data.type;
+    item["path"]["table_name"] = props.data.istablename;
+    item["path"]["filepath"] = props.data.isfilename;
+    item["path"]["filesize"] = props.data.isfilesize;
+
+    array[props.data.index] = item;
+    dispatch(setChangeDuckBookData(JSON.stringify(array)));
+
+    await saveDuckDBData(JSON.stringify(array));
+  };
   const gettabledata = async () => {
+    console.log("11111111111111111111");
     try {
       let data = {
         HASH: duckbook["HASH"],
@@ -61,7 +98,7 @@ const ResultTable = (props: {
           console.error("Error20:", error.message);
           // Handle the error
         });
-
+      console.log("sql", props.data.isSQLQuery);
       let db = props.data.db;
       let conn = await db.connect();
       let check_table = await conn.query(props.data.isSQLQuery);
@@ -81,7 +118,7 @@ const ResultTable = (props: {
           header_titles[i] = temp_header_item;
         }
       }
-
+      console.log("header", header_titles);
       let body_table: any = [];
       output.map((item: any, index: number) => {
         let body_temp: any = {};
@@ -96,37 +133,11 @@ const ResultTable = (props: {
         });
         body_table.push(body_temp);
       });
-      let array = JSON.parse(temp_data[0][4]);
-      let item = {
-        type: 0,
-        value: "",
-        path: {
-          table_name: "",
-          filepath: "",
-          filesize: "",
-        },
-      };
+      console.log("ytrue");
 
-      if (props.data.type === 11) {
-        item["value"] = "";
-      } else if (props.data.type === 12) {
-        item["value"] = "";
-      } else if (props.data.type === 13) {
-        item["value"] = "";
-      } else if (props.data.type === 2) {
-        item["value"] = props.data.isSQLQuery;
-      } else if (props.data.type === 4) {
-        item["value"] = props.data.isPrompt;
+      if (props.data.isreturn == 1) {
+        await setComponetType(temp_data);
       }
-      item["type"] = props.data.type;
-      item["path"]["table_name"] = props.data.istablename;
-      item["path"]["filepath"] = props.data.isfilename;
-      item["path"]["filesize"] = props.data.isfilesize;
-
-      array[props.data.index] = item;
-      dispatch(setChangeDuckBookData(JSON.stringify(array)));
-
-      await saveDuckDBData(JSON.stringify(array));
       console.log(body_table);
       setTableTitle(header_titles);
       setTableData(body_table);
@@ -134,6 +145,7 @@ const ResultTable = (props: {
       setTableColumnCount(header_titles.length);
       setExportFilePath(props.data.isfilename);
       setIsLoadingError(false);
+      setIsTableShow(true);
       // props.setEnableButton(false);
     } catch (err) {
       setIsLoadingError(true);
@@ -146,103 +158,97 @@ const ResultTable = (props: {
       {isLoadingError ? (
         <div></div>
       ) : (
-        // <div
-        //   role="alert"
-        //   className="relative w-full mt-1 p-2 pl-11 translate-y-[-3px] border-destructive/50 text-destructive dark:border-destructive text-destructive border-2 bg-red-50 rounded-md rounded-t-none"
-        // >
-        //   <h5 className="mb-1 font-medium leading-none tracking-tight">
-        //     Oops!
-        //   </h5>
-        //   <div className="text-sm [&amp;_p]:leading-relaxed whitespace-pre-wrap">
-        //     Loading data is failure!
-        //   </div>
-        // </div>
         <div>
-          <div
-            className="relative"
-            onClick={() => {
-              // setShowModal()
-              console.log("sdfsdfds");
-              setIsModalShow(true);
-            }}
-          >
-            <div className=" pointer-events-none absolute bottom-0 flex h-[80px] w-full items-end justify-center">
-              <button
-                className="px-3 inline-block w-auto relative shadow-sm bg-white text-indigo-500 hover:bg-gray-50 border border-gray-600 rounded-md pointer-events-auto z-[2] m-7"
-                type="button"
+          {isTableShow ? (
+            <div>
+              <div
+                className="relative"
                 onClick={() => {
-                  setIsShowLess(!isShowLess);
+                  // setShowModal()
+                  setIsModalShow(true);
                 }}
               >
-                <div className="flex items-center justify-center h-full overflow-visible">
-                  {isShowLess ? (
-                    <span className="h-full overflow-hidden flex items-center">
-                      Show more
-                    </span>
-                  ) : (
-                    <span className="h-full overflow-hidden flex items-center">
-                      Show less
-                    </span>
-                  )}
+                <div className=" pointer-events-none absolute bottom-0 flex h-[80px] w-full items-end justify-center">
+                  <button
+                    className="px-3 inline-block w-auto relative shadow-sm bg-white text-indigo-500 hover:bg-gray-50 border border-gray-600 rounded-md pointer-events-auto z-[2] m-7"
+                    type="button"
+                    onClick={() => {
+                      setIsShowLess(!isShowLess);
+                    }}
+                  >
+                    <div className="flex items-center justify-center h-full overflow-visible">
+                      {isShowLess ? (
+                        <span className="h-full overflow-hidden flex items-center">
+                          Show more
+                        </span>
+                      ) : (
+                        <span className="h-full overflow-hidden flex items-center">
+                          Show less
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  <div className=" absolute w-full h-full bg-white opacity-50 z-[1]"></div>
                 </div>
-              </button>
-              <div className=" absolute w-full h-full bg-white opacity-50 z-[1]"></div>
-            </div>
-            <div
-              className={`${
-                isShowLess ? "h-[250px] " : "h-[420px] "
-              } outline-none overflow-x-scroll relative`}
-            >
-              <div className="w-full h-full absolute">
-                {isShowLess ? (
-                  <Table
-                    width={200 * isTableTitle.length}
-                    height={220}
-                    headerHeight={50}
-                    rowHeight={50}
-                    rowCount={isTableData.length}
-                    rowGetter={({ index }) => isTableData[index]}
-                  >
-                    {isTableTitle.map((item: string, index: number) => (
-                      <Column
-                        className="text-sm"
-                        key={index}
-                        label={item}
-                        dataKey={item}
-                        width={200}
-                      />
-                    ))}
-                  </Table>
-                ) : (
-                  <Table
-                    width={200 * isTableTitle.length}
-                    height={390}
-                    headerHeight={50}
-                    rowHeight={50}
-                    rowCount={isTableData.length}
-                    rowGetter={({ index }) => isTableData[index]}
-                  >
-                    {isTableTitle.map((item: string, index: number) => (
-                      <Column
-                        className="text-sm"
-                        key={index}
-                        label={item}
-                        dataKey={item}
-                        width={200}
-                      />
-                    ))}
-                  </Table>
-                )}
+                <div
+                  className={`${
+                    isShowLess ? "h-[250px] " : "h-[420px] "
+                  } outline-none overflow-x-scroll relative`}
+                >
+                  <div className="w-full h-full absolute">
+                    {isShowLess ? (
+                      <Table
+                        width={200 * isTableTitle.length}
+                        height={220}
+                        headerHeight={50}
+                        rowHeight={50}
+                        rowCount={isTableData.length}
+                        rowGetter={({ index }) => isTableData[index]}
+                      >
+                        {isTableTitle.map((item: string, index: number) => (
+                          <Column
+                            className="text-sm"
+                            key={index}
+                            label={item}
+                            dataKey={item}
+                            width={200}
+                          />
+                        ))}
+                      </Table>
+                    ) : (
+                      <Table
+                        width={200 * isTableTitle.length}
+                        height={390}
+                        headerHeight={50}
+                        rowHeight={50}
+                        rowCount={isTableData.length}
+                        rowGetter={({ index }) => isTableData[index]}
+                      >
+                        {isTableTitle.map((item: string, index: number) => (
+                          <Column
+                            className="text-sm"
+                            key={index}
+                            label={item}
+                            dataKey={item}
+                            width={200}
+                          />
+                        ))}
+                      </Table>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex h-[30px] items-center">
+                <div className="px-2 w-full flex items-center justify-end">
+                  <span className="text-sm text-gray-300">
+                    {tableRowCount} rows × {tableColumnCount} columns
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex h-[30px] items-center">
-            <div className="px-2 w-full flex items-center justify-end">
-              <span className="text-sm text-gray-300">
-                {tableRowCount} rows × {tableColumnCount} columns
-              </span>
-            </div>
-          </div>
+          ) : (
+            <div></div>
+          )}
         </div>
       )}
     </div>

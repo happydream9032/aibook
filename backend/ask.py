@@ -34,7 +34,7 @@ class QuackingDuck:
     def _generate_sql(self, question, debug=False):
         (summary_prompt, summary) = self._schema_summary_internal()
         sql_prompt = f"""Output a single SQL query without any explanation and do not add anything to the query that was not part of the question. Only if the question is not realted to the data in the database, answer with "I don't know".
-            In SQL query, only the name of table is will be start with `'` and end `'` and it will be include '.csv', '.parquet' or '.arrow'. And the name of each column couldn't start and end with `'`. Write a only SQL query data without any other symbol, text or description such as ``` or ```sql from this prompt.
+            In SQL query, only the name of table is will be start and end with `"` and it will be include '.csv', '.parquet' or '.arrow'. And the name of each column couldn't start and end with this `'` symbol.  Write a only SQL query data without any other symbol, text or description such as ``` or ```sql from this prompt.
             Make sure to only use tables and columns from the schema above and write a query to answer the following question:
             "{question}"
             """

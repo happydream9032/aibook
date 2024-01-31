@@ -22,9 +22,7 @@ const RightSidebar = (props: { table_data: any }) => {
                 }}
               />
             </div>
-            {props.table_data.type == 2 || props.table_data.type == 3 ? (
-              <div></div>
-            ) : (
+            {props.table_data.type != 2 || props.table_data.type != 4 ? (
               <div>
                 <div className="flex gap-3 py-2 px-4">
                   <div className="flex flex-1 cursor-default item-center whitespace-nowrap font-medium">
@@ -39,6 +37,8 @@ const RightSidebar = (props: { table_data: any }) => {
                   "{(props.table_data.path.file_size / 1024).toPrecision(2)}KB"
                 </div>
               </div>
+            ) : (
+              <div></div>
             )}
           </div>
           {props.table_data.type == 12 && (
