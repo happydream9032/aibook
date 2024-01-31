@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useDuckDb } from "duckdb-wasm-kit";
 import { insertFile } from "duckdb-wasm-kit";
 import { exportArrow } from "duckdb-wasm-kit";
 import ResultTable from "./ResultTable";
@@ -9,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 import GPT4Icon from "@/assets/images/icons/GPT4.svg";
 import ContentCopy from "@/assets/images/icons/ContentCopy.svg";
+import { table } from "console";
 
 const AIPrompt = (props: {
   type: any;
@@ -17,6 +19,7 @@ const AIPrompt = (props: {
   getSelectedComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
+  const { db, loading, error } = useDuckDb();
   const type = useAppSelector((state) => state.todoReducer.type);
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 
@@ -45,6 +48,7 @@ const AIPrompt = (props: {
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
         istablename: type.path.table_name,
+        isreturn: 0,
       };
       console.log("current db is", json_tabledata);
       setTableData(json_tabledata);
@@ -52,7 +56,7 @@ const AIPrompt = (props: {
       handleRunQuery(type.value, true);
       setIsLoading(true);
     }
-  }, []);
+  }, [props]);
 
   function handleKeyDown(event: any) {
     if (event.key === "Enter") {
@@ -81,11 +85,12 @@ const AIPrompt = (props: {
 
   const handleRunPrompt = async () => {
     try {
-      let conn = await props.db.connect();
+      let conn = await db.connect();
       if (promptvalue != "") {
         let schema_tables = await conn.query(
           "SELECT table_name FROM information_schema.tables;"
         );
+
         let colume_length_array = schema_tables._offsets;
         let column_length = colume_length_array[colume_length_array.length - 1];
         let column_array: any = [];
@@ -98,12 +103,13 @@ const AIPrompt = (props: {
           };
 
           let temp = schema_tables.get(i).toArray(); // table name
+          console.log("step1", temp);
           let sub_table = await conn.query(
             `SELECT * FROM '${String(temp)}' LIMIT 1;`
           );
           let sub_table_schema = sub_table.schema.fields;
           let data_array = sub_table.get(0).toArray();
-
+          console.log("step2", data_array);
           let temp_schema_row: any = {};
           let temp_schema_data: any = {};
           temp_schema["table_name"] = String(temp);
@@ -111,9 +117,12 @@ const AIPrompt = (props: {
             temp_schema_row[sub_table_schema[i]["name"]] = String(
               sub_table_schema[i]["type"]
             );
-            temp_schema_data[sub_table_schema[i]["name"]] = data_array[i];
+            temp_schema_data[sub_table_schema[i]["name"]] = String(
+              data_array[i]
+            );
             //temp_array.push(String(sub_table_schema[i]["name"]+"("+sub_table_schema[i]["type"]+")")) //column data
           }
+          console.log("step3", temp_schema_data);
           temp_schema["row"] = temp_schema_row;
           temp_schema["data"] = temp_schema_data;
           console.log(schema, temp_schema);
@@ -163,6 +172,7 @@ const AIPrompt = (props: {
         isfilename: "aiprompt",
         isSQLQuery: data,
         istablename: "aiprompt",
+        isreturn: 1,
       };
       setTableData(json_tabledata);
       setIsRunLoading(true);
@@ -382,7 +392,6 @@ const AIPrompt = (props: {
                           placeholder=" Paste data here"
                           required
                           onChange={(e) => {
-                            e.preventDefault();
                             setIsSQLQuery(e.currentTarget.value);
                           }}
                         ></textarea>
@@ -392,6 +401,7 @@ const AIPrompt = (props: {
                             type="button"
                             title={""}
                             onClick={() => {
+                              setTableData({});
                               handleRunQuery("", false);
                             }}
                           >
@@ -421,7 +431,7 @@ const AIPrompt = (props: {
                         </div>
                       </div>
                       {isRunLoading && (
-                        <>
+                        <div>
                           <ResultTable data={tableData} />
                           <div className="flex h-[30px] items-center my-2">
                             <div className="px-2 w-full flex items-center justify-between">
@@ -542,7 +552,7 @@ const AIPrompt = (props: {
                               </div>
                             </div>
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   )}

@@ -27,15 +27,6 @@ export default function Home({ params }: { params: { id: string } }) {
     }
   }, [db]);
 
-  useEffect(() => {
-    const config: DuckDBConfig = {
-      query: {
-        castBigIntToDouble: true,
-      },
-    };
-    initializeDuckDb({ config, debug: true });
-  }, []);
-
   const InitDuckDB = async () => {
     try {
       const myArray = JSON.parse(localStorage.getItem("my-array"));

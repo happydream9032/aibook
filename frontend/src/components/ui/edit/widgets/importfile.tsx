@@ -56,6 +56,7 @@ const Importfile = (props: {
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
         istablename: type.path.table_name,
+        isreturn: 0,
       };
       console.log("current db is", json_tabledata);
       setSQLQuery(isSQLQuery);
@@ -128,6 +129,7 @@ const Importfile = (props: {
         isSQLQuery: query,
         istablename: csvfile.name,
         isfilesize: csvfile.size,
+        isreturn: 1,
       };
       setSQLQuery(query);
       setTableData(json_tabledata);
@@ -206,6 +208,7 @@ const Importfile = (props: {
         isSQLQuery: `SELECT * FROM '${lastElement}';`,
         istablename: lastElement,
         isfilesize: temp_file.size,
+        isreturn: 1,
       };
       setTableData(json_tabledata);
       setIsTableShow(true);
@@ -255,6 +258,7 @@ const Importfile = (props: {
         isSQLQuery: `SELECT * FROM '${table_name}';`,
         istablename: table_name,
         isfilesize: file.size,
+        isreturn: 1,
       };
       setTableData(json_tabledata);
       setIsTableShow(true);
@@ -386,10 +390,7 @@ const Importfile = (props: {
         >
           {istableshow ? (
             <div className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-700 w-full right-1 shadow">
-              <ResultTable
-                data={tableData}
-                setEnableButton={(type: boolean) => handleLoadingError(type)}
-              />
+              <ResultTable data={tableData} />
               <div className="flex h-[30px] items-center my-2">
                 <div className="px-2 w-full flex items-center justify-between">
                   <input

@@ -37,13 +37,14 @@ const RunSQL = (props: {
         isfilename: type.path.filepath,
         isSQLQuery: type.value,
         istablename: type.path.table_name,
+        isreturn: 0,
       };
       console.log("current db is", json_tabledata);
       setIsSQLQuery(type.value);
       setTableData(json_tabledata);
       setIsLoading(true);
     }
-  }, []);
+  }, [props]);
 
   const handleRunQuery = async () => {
     try {
@@ -55,6 +56,7 @@ const RunSQL = (props: {
           type: 2,
           index: props.index,
           istablename: "runquery",
+          isreturn: 1,
         };
         setTableData(json_tabledata);
         setIsLoading(true);
@@ -204,7 +206,10 @@ const RunSQL = (props: {
                   className="bg-gray-200 rounded-md px-2 py-2"
                   type="button"
                   title={""}
-                  onClick={handleRunQuery}
+                  onClick={() => {
+                    setTableData({});
+                    //handleRunQuery();
+                  }}
                 >
                   <svg
                     stroke="currentColor"

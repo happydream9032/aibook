@@ -47,6 +47,14 @@ const TypingComponent = (props: {
     }
   }, [db]);
 
+  useEffect(() => {
+    elements.map((item, index) => {
+      if (item == null) {
+        elements.splice(index, 1);
+      }
+    });
+  }, []);
+
   const closeModal = () => {
     setIsDropdownOpen(false);
   };
@@ -54,6 +62,7 @@ const TypingComponent = (props: {
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
     const array = [...elements];
+
     let path = { table_name: "", filepath: "", filesize: "" };
     let componet = { type: type, value: "", path: path };
     array.push(componet);
@@ -77,7 +86,7 @@ const TypingComponent = (props: {
       case "Enter":
         const array = [...elements];
         let path = { table_name: "", filepath: "", filesize: "" };
-        const object = { type: 5, value: value, path: path };
+        const object = { type: 0, value: value, path: path };
         array.push(object);
         setElements(array);
 
@@ -95,7 +104,7 @@ const TypingComponent = (props: {
   const contents = () => {
     return elements.map((item, index) => (
       <div key={index}>
-        {item.type === 5 ? (
+        {item.type === 0 ? (
           <p className="py-4 text-lg">{item.value}</p>
         ) : item.type === 1 ? (
           <Importfile
