@@ -21,6 +21,7 @@ import GPT4Icon from "@/assets/images/icons/GPT4.svg";
 import DropMenuIcon from "@/assets/images/icons/DropMenu.svg";
 import LockIcon from "@/assets/images/icons/LockIcon.svg";
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
+import { data } from "jquery";
 
 const Navbar1 = (props: { id: string }) => {
   const router = useRouter();
@@ -106,11 +107,17 @@ const Navbar1 = (props: { id: string }) => {
   };
 
   const saveFile = async () => {
-    let result_json = { user_id: "", hash: "", design: "", files: "" };
+    let result_json = {
+      table_title: "",
+      user_id: "",
+      hash: "",
+      design: "",
+      files: "",
+    };
     try {
       let database = JSON.parse(duckbook["DATA"]);
       let file_contents_array: Array<Object> = [];
-      database.map(async (item: any, index: number) => {
+      await database.map(async (item: any, index: number) => {
         let temp_path = item["path"];
         if (temp_path["table_name"] != "") {
           let filename = temp_path["table_name"];
@@ -129,18 +136,20 @@ const Navbar1 = (props: { id: string }) => {
           temp_file["title"] = filename;
           temp_file["content"] = String(result);
           file_contents_array.push(temp_file);
-          setExportFileData(file_contents_array);
+
+          if (index === database.length - 1) {
+            result_json["table_title"] = duckbook["DB_NAME"];
+            result_json["user_id"] = duckbook["USER_ID"];
+            result_json["hash"] = duckbook["HASH"];
+            result_json["design"] = database;
+            result_json["files"] = JSON.stringify(file_contents_array);
+            let blob = new Blob([JSON.stringify(result_json)], {
+              type: "application/json",
+            });
+            await savingFile(blob, "example.json");
+          }
         }
       });
-      console.log(isExportFileData);
-      result_json["user_id"] = duckbook["USER_ID"];
-      result_json["hash"] = duckbook["HASH"];
-      result_json["design"] = database;
-      result_json["files"] = JSON.stringify(isExportFileData);
-      let blob = new Blob([JSON.stringify(result_json)], {
-        type: "application/json",
-      });
-      await savingFile(blob, "example.json");
     } catch (error) {
       console.error("File download failed", error);
     }
@@ -157,7 +166,7 @@ const Navbar1 = (props: { id: string }) => {
         const date = new Date().toJSON();
         let data = {
           USER_ID: jsonData["user_id"],
-          TABLE_NAME: "NoTitle",
+          TABLE_NAME: jsonData["table_title"],
           STATUS: 0,
           DATA: JSON.stringify(jsonData["design"]),
           CREATED_AT: date,

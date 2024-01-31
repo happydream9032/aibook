@@ -127,6 +127,7 @@ const Importfile = (props: {
         isfilename: csvfile.name,
         isSQLQuery: query,
         istablename: csvfile.name,
+        isfilesize: csvfile.size,
       };
       setSQLQuery(query);
       setTableData(json_tabledata);
@@ -141,6 +142,7 @@ const Importfile = (props: {
       let conn = await props.db.connect();
       let arry = isfetchurl.split("/");
       let lastElement = arry[arry.length - 1];
+      let temp_file = null;
 
       let table_count_query = await conn.query(
         `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${lastElement}';`
@@ -177,13 +179,20 @@ const Importfile = (props: {
             type: "text/csv",
             lastModified: Date.now(),
           });
-          await insertFile(props.db, file, table_name);
+          await insertFile(props.db, file, lastElement);
+          temp_file = file;
         } else if (
           String(lastElement).includes(".parquet") ||
           String(lastElement).includes(".PARQUET")
         ) {
+          temp_file = await exportParquet(
+            props.db,
+            lastElement,
+            "temp.parquet",
+            "zstd"
+          );
           await conn.query(
-            `CREATE TABLE '${table_name}' AS SELECT * FROM read_parquet('${isfetchurl}');`
+            `CREATE TABLE '${lastElement}' AS SELECT * FROM read_parquet('${isfetchurl}');`
           );
         }
       }
@@ -196,6 +205,7 @@ const Importfile = (props: {
         isfilename: isfetchurl,
         isSQLQuery: `SELECT * FROM '${lastElement}';`,
         istablename: lastElement,
+        isfilesize: temp_file.size,
       };
       setTableData(json_tabledata);
       setIsTableShow(true);
@@ -208,7 +218,7 @@ const Importfile = (props: {
     if (stringTableData != "") {
       let table_name = "pastTable";
       let conn = await props.db.connect();
-
+      let file: File;
       let table_count_query = await conn.query(
         `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}';`
       );
@@ -226,7 +236,7 @@ const Importfile = (props: {
         }
         let csv = array.map((row) => row.join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
-        const file = new File([blob], "data" + String(count) + ".csv", {
+        file = new File([blob], "data.csv", {
           type: "text/csv",
           lastModified: Date.now(),
         });
@@ -244,6 +254,7 @@ const Importfile = (props: {
         isfilename: "data" + String(table_count) + ".csv",
         isSQLQuery: `SELECT * FROM '${table_name}';`,
         istablename: table_name,
+        isfilesize: file.size,
       };
       setTableData(json_tabledata);
       setIsTableShow(true);
@@ -367,6 +378,7 @@ const Importfile = (props: {
               path: {
                 table_name: tableData["istablename"],
                 file_path: tableData["isfilename"],
+                file_size: tableData["isfilesize"],
               },
             };
             props.getSelectedComponentData(data);

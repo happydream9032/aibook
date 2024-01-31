@@ -103,6 +103,7 @@ const ResultTable = (props: {
         path: {
           table_name: "",
           filepath: "",
+          filesize: "",
         },
       };
 
@@ -120,6 +121,7 @@ const ResultTable = (props: {
       item["type"] = props.data.type;
       item["path"]["table_name"] = props.data.istablename;
       item["path"]["filepath"] = props.data.isfilename;
+      item["path"]["filesize"] = props.data.isfilesize;
 
       array[props.data.index] = item;
       dispatch(setChangeDuckBookData(JSON.stringify(array)));

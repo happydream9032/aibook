@@ -1,6 +1,6 @@
 const RightSidebar = (props: { table_data: any }) => {
   return (
-    <div className="top-[150px] right-1 flex w-1/6 h-[600px] items-start rounded-lg bg-transparent !fixed !z-[9999] !bg-white !bg-opacity-100 shadow-sticky border border-gray-500 backdrop-blur-sm !transition">
+    <div className="top-[100px] right-1 flex w-1/6 h-[600px] items-start rounded-lg bg-transparent !fixed !z-[10] !bg-white !bg-opacity-100 shadow-sticky border border-gray-500 backdrop-blur-sm !transition">
       <div className="w-full h-full overflow-hidden rounded-lg border bg-gray-50 text-sm text-gray-700 shadow-xl">
         <div className="flex gap-3 px-4 h-[52px] bg-white">
           <div className="flex flex-1 cursor-default items-center whitespace-nowrap font-bold">
@@ -30,13 +30,13 @@ const RightSidebar = (props: { table_data: any }) => {
                   <div className="flex flex-1 cursor-default item-center whitespace-nowrap font-medium">
                     Size
                   </div>
-                  "108.28 KB"
+                  "{(props.table_data.path.file_size / 1024).toPrecision(2)}KB"
                 </div>
                 <div className="flex gap-3 py-2 px-4">
                   <div className="flex flex-1 cursor-default item-center whitespace-nowrap font-medium">
                     Compressed
                   </div>
-                  "106.28 KB"
+                  "{(props.table_data.path.file_size / 1024).toPrecision(2)}KB"
                 </div>
               </div>
             )}

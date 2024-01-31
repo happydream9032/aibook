@@ -54,7 +54,7 @@ const TypingComponent = (props: {
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
     const array = [...elements];
-    let path = { table_name: "", filepath: "" };
+    let path = { table_name: "", filepath: "", filesize: "" };
     let componet = { type: type, value: "", path: path };
     array.push(componet);
     console.log("array is ===", array);
@@ -76,7 +76,7 @@ const TypingComponent = (props: {
     switch (event.code) {
       case "Enter":
         const array = [...elements];
-        let path = { table_name: "", filepath: "" };
+        let path = { table_name: "", filepath: "", filesize: "" };
         const object = { type: 5, value: value, path: path };
         array.push(object);
         setElements(array);
