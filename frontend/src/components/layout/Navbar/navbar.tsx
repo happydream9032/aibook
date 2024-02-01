@@ -244,11 +244,10 @@ const Navbar1 = (props: { id: string }) => {
 
   return (
     <header
-      className={`header top-0 left-0 z-40 flex w-full items-center bg-transparent ${
-        sticky
+      className={`header top-0 left-0 z-40 flex w-full items-center bg-transparent ${sticky
           ? "!fixed !z-[9999] !bg-white !bg-opacity-100 shadow-sticky border-b-2 border-gray-300 backdrop-blur-sm !transition dark:!bg-primary dark:!bg-opacity-100"
           : "absolute !bg-white !bg-opacity-100 border-b-2 border-gray-300"
-      }`}
+        }`}
     >
       <div className="py-2 px-5 z-40 mx-auto w-full">
         <div className="relative flex items-center justify-between">

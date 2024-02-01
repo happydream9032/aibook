@@ -208,7 +208,7 @@ const RunSQL = (props: {
                   title={""}
                   onClick={() => {
                     setTableData({});
-                    //handleRunQuery();
+                    handleRunQuery();
                   }}
                 >
                   <svg

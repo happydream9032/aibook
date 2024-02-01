@@ -39,7 +39,6 @@ const MainPage = (props: { id: number }) => {
         console.log("response is", response.data);
         if (response.data.ID != 0) {
           getTableData();
-          // router.push(`/edit/${duckbook["HASH"]}`);
         }
       })
       .catch((error) => {

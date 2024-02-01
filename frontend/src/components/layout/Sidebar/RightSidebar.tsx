@@ -1,4 +1,28 @@
+import { useState, useEffect } from "react";
+
 const RightSidebar = (props: { table_data: any }) => {
+  const [filesize, setFileSize] = useState("");
+
+  useEffect(() => {
+    if (props.table_data.type !== 2 && props.table_data.type !== 4 && props.table_data.type !== 1) {
+      if (props.table_data.path.file_size > 1024) {
+        let kbsize = (props.table_data.path.file_size / 1024).toPrecision(2);
+        if (Number(kbsize) > 1024) {
+          let mbsize = (Number(kbsize) / 1024).toPrecision(2);
+
+          if (Number(mbsize) > 1024) {
+            let gbsize = (Number(mbsize) / 1024).toPrecision(2);
+            setFileSize(String(gbsize) + "GB");
+          } else {
+            setFileSize(String(mbsize) + "MB");
+          }
+        } else {
+          setFileSize(String(kbsize) + "KB");
+        }
+      }
+    }
+  }, [props]);
+
   return (
     <div className="top-[100px] right-1 flex w-1/6 h-[600px] items-start rounded-lg bg-transparent !fixed !z-[10] !bg-white !bg-opacity-100 shadow-sticky border border-gray-500 backdrop-blur-sm !transition">
       <div className="w-full h-full overflow-hidden rounded-lg border bg-gray-50 text-sm text-gray-700 shadow-xl">
@@ -22,19 +46,19 @@ const RightSidebar = (props: { table_data: any }) => {
                 }}
               />
             </div>
-            {props.table_data.type != 2 || props.table_data.type != 4 ? (
+            {props.table_data.type !== 2 && props.table_data.type !== 4 ? (
               <div>
                 <div className="flex gap-3 py-2 px-4">
                   <div className="flex flex-1 cursor-default item-center whitespace-nowrap font-medium">
                     Size
                   </div>
-                  "{(props.table_data.path.file_size / 1024).toPrecision(2)}KB"
+                  {filesize}
                 </div>
                 <div className="flex gap-3 py-2 px-4">
                   <div className="flex flex-1 cursor-default item-center whitespace-nowrap font-medium">
                     Compressed
                   </div>
-                  "{(props.table_data.path.file_size / 1024).toPrecision(2)}KB"
+                  {filesize}
                 </div>
               </div>
             ) : (

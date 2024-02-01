@@ -41,7 +41,7 @@ export default function Home({ params }: { params: { id: string } }) {
           );
           let table_count_array = table_count_query._offsets;
           let table_count = table_count_array[table_count_array.length - 1];
-          console.log("Number(table_count) is", Number(table_count));
+          console.log("Number(table_count)", Number(table_count));
           if (Number(table_count) == 0) {
             let binary = window.atob(item["content"]);
             let len = binary.length;
@@ -55,7 +55,6 @@ export default function Home({ params }: { params: { id: string } }) {
               type: "application/vnd.apache.parquet",
               lastModified: Date.now(),
             });
-            console.log("sdfsdfsdfs");
             await insertFile(db, file, item["title"]);
           }
         });
@@ -155,12 +154,13 @@ export default function Home({ params }: { params: { id: string } }) {
     <main>
       {isLoading && (
         <div>
-          <div className="bg-white text-gray-600">
+          <div className="bg-white text-gray-600" >
             <Navbar1 id={duckbook_id} />
           </div>
-          <MainPage id={duckbook_id} />
+          < MainPage id={duckbook_id} />
         </div>
-      )}
+      )
+      }
     </main>
   );
 }

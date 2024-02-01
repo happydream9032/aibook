@@ -7,7 +7,6 @@ import ResultTable from "./ResultTable";
 import { exportParquet } from "duckdb-wasm-kit";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { saveFileToIndexedDB, getFileFromIndexedDB } from "@/db/db.models";
 
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 
@@ -56,6 +55,7 @@ const Importfile = (props: {
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
         istablename: type.path.table_name,
+        isfilesize: type.path.filesize,
         isreturn: 0,
       };
       console.log("current db is", json_tabledata);
@@ -210,6 +210,7 @@ const Importfile = (props: {
         isfilesize: temp_file.size,
         isreturn: 1,
       };
+      setSQLQuery(`SELECT * FROM '${lastElement}';`);
       setTableData(json_tabledata);
       setIsTableShow(true);
       conn.close();

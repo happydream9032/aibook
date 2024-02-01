@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
-import { Column, Table } from "react-virtualized";
+import { Column, Table, AutoSizer } from "react-virtualized";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import "react-virtualized/styles.css";
@@ -22,6 +22,8 @@ const ResultTable = (props: {
   const [tableColumnCount, setTableColumnCount] = useState(0);
   const [exportFilePath, setExportFilePath] = useState("");
   const [isLoadingError, setIsLoadingError] = useState(false);
+  const [isColumnLengthArray, setIsColumnLengthArray] = useState<Array<number>>([]);
+  const [isColumnTotalLength, setIsColumnTotalLength] = useState(0);
 
   useEffect(() => {
     console.log(props.data);
@@ -67,6 +69,14 @@ const ResultTable = (props: {
       item["value"] = props.data.isSQLQuery;
     } else if (props.data.type === 4) {
       item["value"] = props.data.isPrompt;
+    } else if (props.data.type === 141) {
+      item["value"] = props.data.isPrompt;
+    } else if (props.data.type === 142) {
+      item["value"] = props.data.isPrompt;
+    } else if (props.data.type === 143) {
+      item["value"] = props.data.isPrompt;
+    } else if (props.data.type === 144) {
+      item["value"] = props.data.isPrompt;
     }
     item["type"] = props.data.type;
     item["path"]["table_name"] = props.data.istablename;
@@ -111,29 +121,33 @@ const ResultTable = (props: {
       );
 
       let header_titles: any = Object.keys(output[0]);
-      for (let i = 0; i < header_titles.length; i++) {
-        let temp_header_item = header_titles[i];
-        if (temp_header_item.length > 10) {
-          temp_header_item = temp_header_item.slice(0, 10) + "...";
-          header_titles[i] = temp_header_item;
-        }
-      }
       console.log("header", header_titles);
+      let length_array: Array<number> = [];
+      header_titles.map((item: string, index: number) => {
+        length_array.push(String(item).length * 3.5);
+      })
+
       let body_table: any = [];
       output.map((item: any, index: number) => {
         let body_temp: any = {};
         body_temp["id"] = index + 1;
         Object.values(item).map((value: any, index1: number) => {
-          if (String(value).length > 10) {
-            let temp_header_item: string = value.slice(0, 10) + "...";
-            body_temp[header_titles[index1]] = temp_header_item;
-          } else {
-            body_temp[header_titles[index1]] = String(value);
+          if ((String(value).length) * 2 > length_array[index1]) {
+            length_array[index1] = (String(value).length) * 2;
           }
-        });
-        body_table.push(body_temp);
+        })
+        body_table.push(item);
       });
-      console.log("ytrue");
+      setIsColumnLengthArray(length_array);
+
+      // set total width of react-virtualized table
+      let total_width = 0;
+      for (let i = 0; i < length_array.length; i++) {
+        total_width = total_width + length_array[i] + 4;
+      }
+      setIsColumnTotalLength(total_width);
+      //
+      console.log("<<<<<<<<<<<<<<<<<<<<", length_array, total_width, ">>>>>>>>>>>>>>>>>>>>>>>");
 
       if (props.data.isreturn == 1) {
         await setComponetType(temp_data);
@@ -191,14 +205,13 @@ const ResultTable = (props: {
                   <div className=" absolute w-full h-full bg-white opacity-50 z-[1]"></div>
                 </div>
                 <div
-                  className={`${
-                    isShowLess ? "h-[250px] " : "h-[420px] "
-                  } outline-none overflow-x-scroll relative`}
+                  className={`${isShowLess ? "h-[250px] " : "h-[420px] "
+                    } outline-none overflow-x-scroll relative`}
                 >
                   <div className="w-full h-full absolute">
                     {isShowLess ? (
                       <Table
-                        width={200 * isTableTitle.length}
+                        width={isColumnTotalLength * 5}
                         height={220}
                         headerHeight={50}
                         rowHeight={50}
@@ -211,13 +224,13 @@ const ResultTable = (props: {
                             key={index}
                             label={item}
                             dataKey={item}
-                            width={200}
+                            width={isColumnLengthArray[index] * 5}
                           />
                         ))}
                       </Table>
                     ) : (
                       <Table
-                        width={200 * isTableTitle.length}
+                        width={isColumnTotalLength * 5}
                         height={390}
                         headerHeight={50}
                         rowHeight={50}
@@ -230,7 +243,7 @@ const ResultTable = (props: {
                             key={index}
                             label={item}
                             dataKey={item}
-                            width={200}
+                            width={isColumnLengthArray[index] * 5}
                           />
                         ))}
                       </Table>
