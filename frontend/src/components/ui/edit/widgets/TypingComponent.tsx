@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Importfile from "./ImportFile";
 import RunSQL from "./RunSQL";
 import AIPrompt from "./AIPrompt";
+import SampleData from "./SampleData";
 import DropdownModal from "./DropdownModal";
 import { useDuckDb } from "duckdb-wasm-kit";
 
@@ -14,6 +15,7 @@ interface element_type {
   path: {
     table_name: string;
     filepath: string;
+    filesize: string;
   };
 }
 
@@ -162,6 +164,42 @@ const TypingComponent = (props: {
               handleSeletedComponentData(data)
             }
           />
+        ) : item.type === 141 ? (
+          <SampleData
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
+        ) : item.type === 142 ? (
+          <SampleData
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
+        ) : item.type === 143 ? (
+          <SampleData
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
+        ) : item.type === 144 ? (
+          <SampleData
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
         ) : (
           ""
         )}
@@ -170,7 +208,7 @@ const TypingComponent = (props: {
   };
   return (
     <div>
-      <div contentEditable={false}>
+      <div>
         {isShowChildren && contents()}
         <input
           className="text-lg py-4 w-full border border-transparent focus:outline-none"

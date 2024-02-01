@@ -18,16 +18,16 @@ const OpenDialog = (props: {
   tableTitle: string;
 }) => {
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 h-screen w-screen flex items-start justify-center z-30">
-      <div className="p-4 border w-150 shadow-lg rounded-md bg-white">
-        <div className="text-left">
-          <h3 className="text-lg font-bold text-gray-900">Delete Document?</h3>
-          <div className="mt-2 py-3">
-            <p className="text-sm text-gray-500">
-              Are you sure you want to permanently delete "{props.tableTitle}"?
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 h-screen w-screen flex items-start justify-center z-30" >
+      <div className="p-4 border w-150 shadow-lg rounded-md bg-white" >
+        <div className="text-left" >
+          <h3 className="text-lg font-bold text-gray-900" > Delete Document ? </h3>
+          <div className="mt-2 py-3" >
+            <p className="text-sm text-gray-500" >
+              Are you sure you want to permanently delete "{props.tableTitle}" ?
             </p>
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end mt-2" >
             {/* Navigates back to the base URL - closing the modal */}
             <button
               className="px-3 py-1 mx-2 bg-white text-black border border-gray-700 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -68,7 +68,7 @@ const DrawerData = ({ id }) => {
   useEffect(() => {
     console.log("duckbook is = ", duckbook);
     setisListData(duckbooklist);
-  }, []);
+  }, [duckbooklist]);
 
   const changeTableData = (response: any) => {
     let response_data = response;
@@ -161,8 +161,8 @@ const DrawerData = ({ id }) => {
   };
 
   return (
-    <div className="rounded-md max-w-sm w-full h-full">
-      <header className=" mb-5 flex items-center justify-center">
+    <div className="rounded-md max-w-sm w-full h-full" >
+      <header className=" mb-5 flex items-center justify-center" >
         <div>
           <button
             type="button"
@@ -176,8 +176,8 @@ const DrawerData = ({ id }) => {
           </button>
         </div>
       </header>
-      <div className="flex-1 justify-between">
-        <div className="sm:block">
+      <div className="flex-1 justify-between" >
+        <div className="sm:block" >
           {isListData.map((item, index) => (
             <div
               className="group flex cursor-pointer border-b border-gray-200 py-2 px-4 hover:bg-gray-200 items-center justify-between"
@@ -189,10 +189,10 @@ const DrawerData = ({ id }) => {
                   router.push(`/edit/${item["HASH"]}`);
                 }}
               >
-                <span className="w-full flex flex-1 text-lg">
+                <span className="w-full flex flex-1 text-lg" >
                   {item["DB_NAME"]}
                 </span>
-                <span className="w-full flex flex-1 text-sm text-gray-400">
+                < span className="w-full flex flex-1 text-sm text-gray-400" >
                   234234
                 </span>
               </button>
@@ -210,13 +210,15 @@ const DrawerData = ({ id }) => {
           ))}
         </div>
       </div>
-      {isShowDeleteDialog && (
-        <OpenDialog
-          tableTitle={isDeleteName}
-          closeModal={() => closeDialog()}
-          selectDeleteRecoder={() => handleSelectDeleteRecorder()}
-        />
-      )}
+      {
+        isShowDeleteDialog && (
+          <OpenDialog
+            tableTitle={isDeleteName}
+            closeModal={() => closeDialog()
+            }
+            selectDeleteRecoder={() => handleSelectDeleteRecorder()}
+          />
+        )}
     </div>
   );
 };

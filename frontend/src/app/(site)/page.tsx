@@ -52,7 +52,6 @@ export default function Home() {
     await axios
       .post(select_apiUrl)
       .then((response) => {
-        console.log("response1 is", response.data);
         if (response.data.length == 0) {
           insertTableRecorder();
         } else {
