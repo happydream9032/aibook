@@ -204,7 +204,7 @@ const ResultTable = (props: {
                       >
                         {isTableTitle.map((item: string, index: number) => (
                           <Column
-                            className="text-sm"
+                            className="text-sm text-gray-300"
                             key={index}
                             label={item}
                             dataKey={item}
