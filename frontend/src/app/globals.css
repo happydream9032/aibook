@@ -75,3 +75,14 @@ padding: 0;
 .ReactVirtualized__Table__headerTruncatedText {
 flex: auto;
 }
+
+.ReactVirtualized__Table__headerRow {
+	border: 0;
+	color: #000066;
+}
+
+.ReactVirtualized__Table__rowColumn {
+	border: 0;
+	color: #4d4dff;
+}
+
