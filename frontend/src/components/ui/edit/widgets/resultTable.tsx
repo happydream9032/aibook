@@ -1,23 +1,19 @@
 import axios from "axios";
-import { useDuckDb } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
-import { Column, Table, AutoSizer } from "react-virtualized";
+import { Column, Table } from "react-virtualized";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import "react-virtualized/styles.css";
 
 const ResultTable = (props: {
   data: any;
-  // setEnableButton: (type: boolean) => void;
 }) => {
-  const { db, loading, error } = useDuckDb();
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const [isTableShow, setIsTableShow] = useState(false);
   const [isShowLess, setIsShowLess] = useState(false);
   const [isTableTitle, setTableTitle] = useState([]);
   const [isTableData, setTableData] = useState([]);
-  const [isModalShow, setIsModalShow] = useState(false);
   const [tableRowCount, setTableRowCount] = useState(0);
   const [tableColumnCount, setTableColumnCount] = useState(0);
   const [exportFilePath, setExportFilePath] = useState("");
@@ -89,7 +85,6 @@ const ResultTable = (props: {
     await saveDuckDBData(JSON.stringify(array));
   };
   const gettabledata = async () => {
-    console.log("11111111111111111111");
     try {
       let data = {
         HASH: duckbook["HASH"],
@@ -106,9 +101,7 @@ const ResultTable = (props: {
         })
         .catch((error) => {
           console.error("Error20:", error.message);
-          // Handle the error
         });
-      console.log("sql", props.data.isSQLQuery);
       let db = props.data.db;
       let conn = await db.connect();
       let check_table = await conn.query(props.data.isSQLQuery);
@@ -121,7 +114,6 @@ const ResultTable = (props: {
       );
 
       let header_titles: any = Object.keys(output[0]);
-      console.log("header", header_titles);
       let length_array: Array<number> = [];
       header_titles.map((item: string, index: number) => {
         length_array.push(String(item).length * 3.5);
@@ -146,8 +138,6 @@ const ResultTable = (props: {
         total_width = total_width + length_array[i] + 4;
       }
       setIsColumnTotalLength(total_width);
-      //
-      console.log("<<<<<<<<<<<<<<<<<<<<", length_array, total_width, ">>>>>>>>>>>>>>>>>>>>>>>");
 
       if (props.data.isreturn == 1) {
         await setComponetType(temp_data);
@@ -175,13 +165,7 @@ const ResultTable = (props: {
         <div>
           {isTableShow ? (
             <div>
-              <div
-                className="relative"
-                onClick={() => {
-                  // setShowModal()
-                  setIsModalShow(true);
-                }}
-              >
+              <div className="relative">
                 <div className=" pointer-events-none absolute bottom-0 flex h-[80px] w-full items-end justify-center">
                   <button
                     className="px-3 inline-block w-auto relative shadow-sm bg-white text-indigo-500 hover:bg-gray-50 border border-gray-600 rounded-md pointer-events-auto z-[2] m-7"

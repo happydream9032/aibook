@@ -1,13 +1,17 @@
 import axios from "axios";
+import Image from "next/image";
+import ResultTable from "./ResultTable";
 import { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { exportArrow } from "duckdb-wasm-kit";
 import { insertFile } from "duckdb-wasm-kit";
-import ResultTable from "./ResultTable";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import "react-toastify/dist/ReactToastify.css";
+
+import RunSQLQueryIcon from '@/assets/images/icons/RunSQLQueryIcon.svg';
+import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 
 const RunSQL = (props: {
   type: any;
@@ -16,7 +20,7 @@ const RunSQL = (props: {
   getSelectedComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
-  const { db, loading, error } = useDuckDb();
+  const { db } = useDuckDb();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 
   const [isSQLQuery, setIsSQLQuery] = useState("");
@@ -70,7 +74,6 @@ const RunSQL = (props: {
   const downloadFile = async (type: number) => {
     let conn = props.db.connect();
     let query = isSQLQuery.replaceAll(";", "");
-    let file_type = "";
 
     let temp = exportFileName.split(".");
     let original_filename = temp[0];
@@ -211,24 +214,12 @@ const RunSQL = (props: {
                     handleRunQuery();
                   }}
                 >
-                  <svg
-                    stroke="currentColor"
-                    fill="none"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    height="1.5em"
-                    width="1.5em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z"
-                      strokeWidth="0"
-                      fill="currentColor"
-                    ></path>
-                  </svg>
+                  <Image
+                    src={RunSQLQueryIcon}
+                    alt=""
+                    width="24"
+                    height="24"
+                  />
                 </button>
               </div>
             </div>
@@ -255,26 +246,12 @@ const RunSQL = (props: {
                           }}
                           title={""}
                         >
-                          <svg
-                            stroke="currentColor"
-                            fill="none"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            height="24"
+                          <Image
+                            src={MoreViewIcon}
+                            alt=""
                             width="24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              stroke="none"
-                              d="M0 0h24v24H0z"
-                              fill="none"
-                            ></path>
-                            <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                            <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                            <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                          </svg>
+                            height="24"
+                          />
                         </button>
 
                         {isSQLDropMenu && (

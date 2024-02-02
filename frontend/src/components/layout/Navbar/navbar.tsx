@@ -23,6 +23,47 @@ import LockIcon from "@/assets/images/icons/LockIcon.svg";
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 import { data } from "jquery";
 
+const OpenDialog = (props: {
+  selectDeleteRecoder: () => void;
+  closeModal: () => void;
+  tableTitle: string;
+}) => {
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 h-screen w-screen flex items-start justify-center z-30" >
+      <div className="p-4 border w-150 shadow-lg rounded-md bg-white" >
+        <div className="text-left" >
+          <h3 className="text-lg font-bold text-gray-900" > Delete Document ? </h3>
+          <div className="mt-2 py-3" >
+            <p className="text-sm text-gray-500" >
+              Are you sure you want to permanently delete "{props.tableTitle}" ?
+            </p>
+          </div>
+          <div className="flex justify-end mt-2" >
+            {/* Navigates back to the base URL - closing the modal */}
+            <button
+              className="px-3 py-1 mx-2 bg-white text-black border border-gray-700 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              onClick={() => {
+                props.closeModal();
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 mx-2 bg-red-500 text-white text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              onClick={() => {
+                props.selectDeleteRecoder();
+                props.closeModal();
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Navbar1 = (props: { id: string }) => {
   const router = useRouter();
   const { db, loading, error } = useDuckDb();
@@ -31,12 +72,16 @@ const Navbar1 = (props: { id: string }) => {
   const dispatch = useAppDispatch();
 
   const [hashData, setHashData] = useState(props.id);
+  const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false);
+  const [isDeleteNumber, setIsDeleteNumber] = useState(0);
+  const [isDeleteName, setIsDeleteName] = useState("");
   const [isOpenGPTType, setIsOpenGPTType] = useState(false);
   const [isGPTType, setIsGPTType] = useState(false);
   const [isOpenPrivate, setIsOpenPrivate] = useState(false);
   const [isOpenSetting, setIsOpenSetting] = useState(false);
   const [isSidebarOpen, setIsSideBarOpen] = useState(false);
   const [isImportedHash, setIsImportedHash] = useState("");
+  const [isDeleteRecoder, setIsDeleteRecoder] = useState(false);
   const [isExportFileData, setExportFileData] = useState([]);
   const isEnableOverlay: boolean = false;
 
@@ -242,11 +287,43 @@ const Navbar1 = (props: { id: string }) => {
     }
   };
 
+  const closeDialog = () => {
+    setIsShowDeleteDialog(false);
+  };
+
+  const handleSelectDeleteRecorder = () => {
+    setIsDeleteRecoder(false);
+    deleteTableRecorder();
+  };
+
+  const deleteTableRecorder = async () => {
+    let data = {
+      ID: isDeleteNumber,
+    };
+    let delete_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/deletedbtable";
+    await axios
+      .post(delete_apiUrl, data)
+      .then((response) => {
+        console.log("delee response is", response.data);
+        if (response.data != "") {
+          if (isDeleteNumber === duckbook["ID"]) {
+            router.push("/");
+          } else {
+            window.location.reload();
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error5:", error.message);
+        // Handle the error
+      });
+  };
+
   return (
     <header
       className={`header top-0 left-0 z-40 flex w-full items-center bg-transparent ${sticky
-          ? "!fixed !z-[9999] !bg-white !bg-opacity-100 shadow-sticky border-b-2 border-gray-300 backdrop-blur-sm !transition dark:!bg-primary dark:!bg-opacity-100"
-          : "absolute !bg-white !bg-opacity-100 border-b-2 border-gray-300"
+        ? "!fixed !z-[9999] !bg-white !bg-opacity-100 shadow-sticky border-b-2 border-gray-300 backdrop-blur-sm !transition dark:!bg-primary dark:!bg-opacity-100"
+        : "absolute !bg-white !bg-opacity-100 border-b-2 border-gray-300"
         }`}
     >
       <div className="py-2 px-5 z-40 mx-auto w-full">
@@ -458,6 +535,11 @@ const Navbar1 = (props: { id: string }) => {
                         <button
                           type="button"
                           className="w-full justify-center py-3 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
+                          onClick={() => {
+                            setIsDeleteName(duckbook["DB_NAME"]);
+                            setIsDeleteNumber(duckbook["ID"]);
+                            setIsShowDeleteDialog(true);
+                          }}
                         >
                           <span className="text-sm text-red-600">
                             Delete Doc
@@ -474,6 +556,15 @@ const Navbar1 = (props: { id: string }) => {
         <Drawer id={hashData} isOpen={isSidebarOpen} setIsOpen={toggleSidebar}>
           <DrawerData id={hashData} />
         </Drawer>
+        {
+          isShowDeleteDialog && (
+            <OpenDialog
+              tableTitle={isDeleteName}
+              closeModal={() => closeDialog()
+              }
+              selectDeleteRecoder={() => handleSelectDeleteRecorder()}
+            />
+          )}
       </div>
     </header>
   );

@@ -1,10 +1,9 @@
 "use client";
 import axios from "axios";
+import { Suspense } from 'react'
 import Navbar1 from "@/components/layout/Navbar/navbar";
-import MainPage from "@/components/ui/edit/mainpage";
+import MainPage from "@/components/ui/edit/MainPage";
 import { insertFile } from "duckdb-wasm-kit";
-import { DuckDBConfig } from "@duckdb/duckdb-wasm";
-import { initializeDuckDb } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
@@ -152,15 +151,16 @@ export default function Home({ params }: { params: { id: string } }) {
 
   return (
     <main>
-      {isLoading && (
-        <div>
-          <div className="bg-white text-gray-600" >
-            <Navbar1 id={duckbook_id} />
+      <Suspense fallback={<p>Loading DuckDB ... </p>}>
+        {isLoading && (
+          <div>
+            <div className="bg-white text-gray-600" >
+              <Navbar1 id={duckbook_id} />
+            </div>
+            < MainPage id={duckbook_id} />
           </div>
-          < MainPage id={duckbook_id} />
-        </div>
-      )
-      }
+        )}
+      </Suspense>
     </main>
   );
 }

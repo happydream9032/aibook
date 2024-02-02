@@ -11,14 +11,10 @@ import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useState, useEffect } from "react";
 
-const MainPage = (props: { id: number }) => {
+const MainPage = (props: { id: string }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
-  const duckbooklist: any = useAppSelector(
-    (state) => state.navbarlistReducer.data
-  );
-
   const [dbname, setDbName] = useState("");
   const [isComponetData, setIsComponetData] = useState({});
   const [isModalShow, setIsModalShow] = useState(false);
@@ -50,7 +46,7 @@ const MainPage = (props: { id: number }) => {
   const changeTableData = async (response: any) => {
     let response_data = response;
     let final_data: any = [];
-    response_data.map((item: any, index: number) => {
+    response_data.map((item: any) => {
       let temp_data = {
         ID: 0,
         USER_ID: "",
@@ -67,11 +63,9 @@ const MainPage = (props: { id: number }) => {
       temp_data["DATA"] = String(item[4]);
       temp_data["TIME"] = String(item[5]);
       temp_data["HASH"] = String(item[6]);
-
       final_data.push(temp_data);
     });
     await dispatch(setDuckBookListState(final_data));
-    //router.refresh();
     router.push(`/edit/${duckbook["HASH"]}`);
   };
 
