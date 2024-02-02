@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
-
 import LoadDataIcon from "@/assets/images/icons/LoadData.svg";
 import SQLIcon from "@/assets/images/icons/SQLIcon.svg";
 import ChartIcon from "@/assets/images/icons/ChartIcon.svg";

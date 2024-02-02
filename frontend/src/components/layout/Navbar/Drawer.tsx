@@ -5,7 +5,6 @@ import axios from "axios";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
-import NewDocumentIcon from "@/assets/images/icons/NewDocument.svg";
 import CloseDialogIcon from "@/assets/images/icons/CloseDialog.svg";
 
 interface DrawerProps {

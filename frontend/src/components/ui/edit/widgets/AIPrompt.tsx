@@ -1,16 +1,18 @@
 import axios from "axios";
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import ResultTable from "./ResultTable";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { insertFile } from "duckdb-wasm-kit";
 import { exportArrow } from "duckdb-wasm-kit";
-import ResultTable from "./ResultTable";
+import { useState, useEffect } from "react";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 import GPT4Icon from "@/assets/images/icons/GPT4.svg";
 import ContentCopy from "@/assets/images/icons/ContentCopy.svg";
-import { table } from "console";
+import RunSQLQueryIcon from '@/assets/images/icons/RunSQLQueryIcon.svg';
+import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
+import NewIcon1 from "@/assets/images/icons/NewIcon1.svg";
 
 const AIPrompt = (props: {
   type: any;
@@ -19,7 +21,7 @@ const AIPrompt = (props: {
   getSelectedComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
-  const { db, loading, error } = useDuckDb();
+  const { db } = useDuckDb();
   const type = useAppSelector((state) => state.todoReducer.type);
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 
@@ -50,7 +52,6 @@ const AIPrompt = (props: {
         istablename: type.path.table_name,
         isreturn: 0,
       };
-      console.log("current db is", json_tabledata);
       setTableData(json_tabledata);
       setIsSQLQuery(type.value);
       handleRunQuery(type.value, true);
@@ -93,7 +94,6 @@ const AIPrompt = (props: {
 
         let colume_length_array = schema_tables._offsets;
         let column_length = colume_length_array[colume_length_array.length - 1];
-        let column_array: any = [];
         let schema = [];
         for (let i = 0; i < Number(column_length); i++) {
           let temp_schema: any = {
@@ -102,14 +102,14 @@ const AIPrompt = (props: {
             data: {},
           };
 
-          let temp = schema_tables.get(i).toArray(); // table name
-          console.log("step1", temp);
+          let temp = schema_tables.get(i).toArray(); // get table names
+          //get first row of all tables.
           let sub_table = await conn.query(
             `SELECT * FROM '${String(temp)}' LIMIT 1;`
           );
           let sub_table_schema = sub_table.schema.fields;
           let data_array = sub_table.get(0).toArray();
-          console.log("step2", data_array);
+          // make schema with table name, types of row and column data
           let temp_schema_row: any = {};
           let temp_schema_data: any = {};
           temp_schema["table_name"] = String(temp);
@@ -120,9 +120,7 @@ const AIPrompt = (props: {
             temp_schema_data[sub_table_schema[i]["name"]] = String(
               data_array[i]
             );
-            //temp_array.push(String(sub_table_schema[i]["name"]+"("+sub_table_schema[i]["type"]+")")) //column data
           }
-          console.log("step3", temp_schema_data);
           temp_schema["row"] = temp_schema_row;
           temp_schema["data"] = temp_schema_data;
           console.log(schema, temp_schema);
@@ -133,7 +131,6 @@ const AIPrompt = (props: {
           prompt: promptvalue,
           model: type,
         };
-        console.log("request data is", data);
         const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/runprompt";
         await axios
           .post(apiUrl, data)
@@ -186,7 +183,6 @@ const AIPrompt = (props: {
   const downloadFile = async (type: number) => {
     let conn = props.db.connect();
     let query = isSQLQuery.replaceAll(";", "");
-    let file_type = "";
 
     let temp = exportFileName.split(".");
     let original_filename = temp[0];
@@ -344,25 +340,12 @@ const AIPrompt = (props: {
                         />
                       </div>
                     ) : (
-                      <svg
-                        stroke="currentColor"
-                        fill="none"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        height="1.1em"
-                        width="1.1em"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          stroke="none"
-                          d="M0 0h24v24H0z"
-                          fill="none"
-                        ></path>
-                        <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
-                        <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path>
-                      </svg>
+                      <Image
+                        src={NewIcon1}
+                        alt=""
+                        width="15"
+                        height="15"
+                      />
                     )}
                   </button>
                 </div>
@@ -405,28 +388,12 @@ const AIPrompt = (props: {
                               handleRunQuery("", false);
                             }}
                           >
-                            <svg
-                              stroke="currentColor"
-                              fill="none"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              height="1.5em"
-                              width="1.5em"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                stroke="none"
-                                d="M0 0h24v24H0z"
-                                fill="none"
-                              ></path>
-                              <path
-                                d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z"
-                                strokeWidth="0"
-                                fill="currentColor"
-                              ></path>
-                            </svg>
+                            <Image
+                              src={RunSQLQueryIcon}
+                              alt=""
+                              width="24"
+                              height="24"
+                            />
                           </button>
                         </div>
                       </div>
@@ -453,26 +420,12 @@ const AIPrompt = (props: {
                                     }}
                                     title={""}
                                   >
-                                    <svg
-                                      stroke="currentColor"
-                                      fill="none"
-                                      strokeWidth="2"
-                                      viewBox="0 0 24 24"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      height="24"
-                                      width="24"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path
-                                        stroke="none"
-                                        d="M0 0h24v24H0z"
-                                        fill="none"
-                                      ></path>
-                                      <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                                      <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                                      <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                                    </svg>
+                                    <Image
+                                      src={MoreViewIcon}
+                                      alt=""
+                                      width="20"
+                                      height="20"
+                                    />
                                   </button>
 
                                   {isSQLDropMenu && (

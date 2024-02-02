@@ -27,8 +27,6 @@ const TypingComponent = (props: {
   const duckbook = useAppSelector((state) => state.navbarReducer.data);
   const { db, loading, error } = useDuckDb();
   const element_data = JSON.parse(duckbook["DATA"]);
-
-  const [database, setDatabase] = useState();
   const [isShowChildren, setIsShowChildren] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); //show dropmenu
   const [value, setValue] = useState(""); // current text of input component
@@ -44,7 +42,6 @@ const TypingComponent = (props: {
 
   useEffect(() => {
     if (db != undefined) {
-      setDatabase(db);
       setIsShowChildren(true);
     }
   }, [db]);
@@ -64,7 +61,6 @@ const TypingComponent = (props: {
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
     const array = [...elements];
-
     let path = { table_name: "", filepath: "", filesize: "" };
     let componet = { type: type, value: "", path: path };
     array.push(componet);
