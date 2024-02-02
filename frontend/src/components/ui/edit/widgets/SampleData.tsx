@@ -326,7 +326,7 @@ const SampleData = (props: {
                   e.preventDefault();
                   setExportFileName(e.currentTarget.value);
                 }}
-              ></input>
+              />
               <div className="items-center gap-3 lg:flex">
                 <div className="relative inline-block flex justify-end">
                   <button
@@ -335,7 +335,6 @@ const SampleData = (props: {
                     onClick={() => {
                       setIsSQLDropMenu(!isSQLDropMenu);
                     }}
-                    title={""}
                   >
                     <Image
                       src={MoreViewIcon}
@@ -561,7 +560,6 @@ const SampleData = (props: {
               </div>
             </div>
           </div>)}
-
         </div>)}
     </div>
   );

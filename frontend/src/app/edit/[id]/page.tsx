@@ -13,12 +13,11 @@ import { useRouter } from "next/navigation";
 
 export default function Home({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
-  const { db, loading, error } = useDuckDb();
+  const { db } = useDuckDb();
 
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
 
   useEffect(() => {
     if (db != null) {
@@ -58,11 +57,7 @@ export default function Home({ params }: { params: { id: string } }) {
           }
         });
       }
-      if (Object.keys(duckbook).length === 0) {
-        router.push("/");
-      } else {
-        getTableData();
-      }
+      await getTableData();
     } catch (error) {
       console.log("222", error);
     }
@@ -79,7 +74,7 @@ export default function Home({ params }: { params: { id: string } }) {
         console.log("response is", response.data);
 
         let final_data: any = [];
-        response.data.map((item: any, index: number) => {
+        response.data.map((item: any) => {
           let temp_data = {
             ID: 0,
             USER_ID: "",
@@ -96,7 +91,6 @@ export default function Home({ params }: { params: { id: string } }) {
           temp_data["DATA"] = String(item[4]);
           temp_data["TIME"] = String(item[5]);
           temp_data["HASH"] = String(item[6]);
-
           final_data.push(temp_data);
         });
         dispatch(setDuckBookState(final_data[0]));
@@ -110,7 +104,7 @@ export default function Home({ params }: { params: { id: string } }) {
   const changeTableData = async (response: any) => {
     let response_data = response;
     let final_data: any = [];
-    response_data.map((item: any, index: number) => {
+    response_data.map((item: any) => {
       let temp_data = {
         ID: 0,
         USER_ID: "",
@@ -127,7 +121,6 @@ export default function Home({ params }: { params: { id: string } }) {
       temp_data["DATA"] = String(item[4]);
       temp_data["TIME"] = String(item[5]);
       temp_data["HASH"] = String(item[6]);
-
       final_data.push(temp_data);
     });
     await setDuckBookDB();
@@ -141,11 +134,14 @@ export default function Home({ params }: { params: { id: string } }) {
       .post(select_apiUrl)
       .then((response) => {
         console.log("response is", response.data);
-        changeTableData(response.data);
+        if (response.data.length == 0) {
+          router.push("/");
+        } else {
+          changeTableData(response.data);
+        }
       })
       .catch((error) => {
         console.error("Error4:", error.message);
-        // Handle the error
       });
   };
 

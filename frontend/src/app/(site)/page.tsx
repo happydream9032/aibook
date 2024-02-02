@@ -9,7 +9,6 @@ import { setDuckBookState } from "@/redux/features/navbar-slice";
 export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
 
   useEffect(() => {
     const myArray = JSON.parse(localStorage.getItem("my-array"));
@@ -22,7 +21,7 @@ export default function Home() {
   const changeTableData = async (response: any) => {
     let response_data = response;
     let final_data: any = [];
-    response_data.map((item: any, index: number) => {
+    response_data.map((item: any) => {
       let temp_data = {
         ID: 0,
         USER_ID: "",
@@ -72,7 +71,7 @@ export default function Home() {
     let temp = [];
     temp.push(componet);
     let data = {
-      USER_ID: "234434645645",
+      USER_ID: "23443464",
       TABLE_NAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),
