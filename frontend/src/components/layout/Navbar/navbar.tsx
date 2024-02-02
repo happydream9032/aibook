@@ -358,17 +358,8 @@ const Navbar1 = (props: { id: string }) => {
                   className="px-4 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
                   onClick={toggleTypeDropdown}
                 >
-                  {isGPTType ? (
-                    <Image src={GPT35Icon} alt="" width="24" height="24" />
-                  ) : (
-                    <Image src={GPT4Icon} alt="" width="24" height="24" />
-                  )}
-
-                  {isGPTType ? (
-                    <span> GPT-3.5 &nbsp;</span>
-                  ) : (
-                    <span> GPT-4 &nbsp;</span>
-                  )}
+                  <Image src={isGPTType ? GPT35Icon : GPT4Icon} alt="" width="24" height="24" />
+                  <span>{isGPTType ? "GPT-3.5 " : "GPT-4 "}</span>
                   <Image src={DropMenuIcon} alt="" width="15" height="10" />
                 </button>
 

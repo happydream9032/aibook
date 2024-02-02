@@ -138,7 +138,7 @@ const DrawerData = ({ id }) => {
     temp.push(componet);
 
     let data = {
-      USER_ID: "234434645645",
+      USER_ID: "23443464",
       TABLE_NAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),

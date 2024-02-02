@@ -509,15 +509,7 @@ const Importfile = (props: {
                           setIsExampleTab(false);
                         }}
                       >
-                        {isImportTab ? (
-                          <span className="font-semibold text-sm text-indigo-500">
-                            Import file
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-sm text-gray-900">
-                            Import file
-                          </span>
-                        )}
+                        <span className={`${isImportTab ? "text-indigo-500" : "text-gray-900"} font-semibold text-sm`}>Import file</span>
                       </button>
                       <button
                         className="py-2 hover:bg-gray-100 focus:bg-indigo-50 aria-selected:font-semibold aria-selected:text-indigo-500 outline-0"
@@ -533,15 +525,7 @@ const Importfile = (props: {
                           setIsExampleTab(false);
                         }}
                       >
-                        {isFetchTab ? (
-                          <span className="font-semibold text-sm text-indigo-500">
-                            Fetch Url
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-sm text-gray-900">
-                            Fetch Url
-                          </span>
-                        )}
+                        <span className={`${isFetchTab ? "text-indigo-500" : "text-gray-900"} font-semibold text-sm`}>Fetch Url</span>
                       </button>
                       <button
                         className="py-2 hover:bg-gray-100 focus:bg-indigo-50 aria-selected:font-semibold aria-selected:text-indigo-500 outline-0"
@@ -557,15 +541,7 @@ const Importfile = (props: {
                           setIsExampleTab(false);
                         }}
                       >
-                        {isPasteTableTab ? (
-                          <span className="font-semibold text-sm text-indigo-500">
-                            Paste Table
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-sm text-gray-900">
-                            Paste Table
-                          </span>
-                        )}
+                        <span className={`${isPasteTableTab ? "text-indigo-500" : "text-gray-900"} font-semibold text-sm`}>Paste Table</span>
                       </button>
                       <button
                         className="py-2 hover:bg-gray-100 focus:bg-indigo-50 aria-selected:font-semibold aria-selected:text-indigo-500 outline-0"
@@ -582,15 +558,7 @@ const Importfile = (props: {
                           setIsExampleTab(true);
                         }}
                       >
-                        {isExampleTab ? (
-                          <span className="font-semibold text-sm text-indigo-500">
-                            Example
-                          </span>
-                        ) : (
-                          <span className="font-semibold text-sm text-gray-900">
-                            Example
-                          </span>
-                        )}
+                        <span className={`${isPasteTableTab ? "text-indigo-500" : "text-gray-900"} font-semibold text-sm`}>Example</span>
                       </button>
                     </div>
 

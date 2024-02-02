@@ -11,7 +11,7 @@ const ResultTable = (props: {
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const [isTableShow, setIsTableShow] = useState(false);
-  const [isShowLess, setIsShowLess] = useState(false);
+  const [isShowLess, setIsShowLess] = useState(true);
   const [isTableTitle, setTableTitle] = useState([]);
   const [isTableData, setTableData] = useState([]);
   const [tableRowCount, setTableRowCount] = useState(0);
@@ -159,11 +159,9 @@ const ResultTable = (props: {
 
   return (
     <div className="">
-      {isLoadingError ? (
-        <div></div>
-      ) : (
+      {!isLoadingError && (
         <div>
-          {isTableShow ? (
+          {isTableShow && (
             <div>
               <div className="relative">
                 <div className=" pointer-events-none absolute bottom-0 flex h-[80px] w-full items-end justify-center">
@@ -175,15 +173,9 @@ const ResultTable = (props: {
                     }}
                   >
                     <div className="flex items-center justify-center h-full overflow-visible">
-                      {isShowLess ? (
-                        <span className="h-full overflow-hidden flex items-center">
-                          Show more
-                        </span>
-                      ) : (
-                        <span className="h-full overflow-hidden flex items-center">
-                          Show less
-                        </span>
-                      )}
+                      <span className="h-full overflow-hidden flex items-center">
+                        {isShowLess ? "Show more" : "Show less"}
+                      </span>
                     </div>
                   </button>
                   <div className=" absolute w-full h-full bg-white opacity-50 z-[1]"></div>
@@ -193,45 +185,23 @@ const ResultTable = (props: {
                     } outline-none overflow-x-scroll relative`}
                 >
                   <div className="w-full h-full absolute">
-                    {isShowLess ? (
-                      <Table
-                        width={isColumnTotalLength * 5}
-                        height={220}
-                        headerHeight={50}
-                        rowHeight={50}
-                        rowCount={isTableData.length}
-                        rowGetter={({ index }) => isTableData[index]}
-                      >
-                        {isTableTitle.map((item: string, index: number) => (
-                          <Column
-                            className="text-sm text-gray-300"
-                            key={index}
-                            label={item}
-                            dataKey={item}
-                            width={isColumnLengthArray[index] * 5}
-                          />
-                        ))}
-                      </Table>
-                    ) : (
-                      <Table
-                        width={isColumnTotalLength * 5}
-                        height={390}
-                        headerHeight={50}
-                        rowHeight={50}
-                        rowCount={isTableData.length}
-                        rowGetter={({ index }) => isTableData[index]}
-                      >
-                        {isTableTitle.map((item: string, index: number) => (
-                          <Column
-                            className="text-sm"
-                            key={index}
-                            label={item}
-                            dataKey={item}
-                            width={isColumnLengthArray[index] * 5}
-                          />
-                        ))}
-                      </Table>
-                    )}
+                    <Table
+                      width={isColumnTotalLength * 5}
+                      height={isShowLess ? 220 : 390}
+                      headerHeight={50}
+                      rowHeight={50}
+                      rowCount={isTableData.length}
+                      rowGetter={({ index }) => isTableData[index]}
+                    >
+                      {isTableTitle.map((item: string, index: number) => (
+                        <Column
+                          key={index}
+                          label={item}
+                          dataKey={item}
+                          width={isColumnLengthArray[index] * 5}
+                        />
+                      ))}
+                    </Table>
                   </div>
                 </div>
               </div>
@@ -243,8 +213,6 @@ const ResultTable = (props: {
                 </div>
               </div>
             </div>
-          ) : (
-            <div></div>
           )}
         </div>
       )}
