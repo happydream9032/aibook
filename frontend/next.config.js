@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     compress: true,
+    images: {
+        domains: ['img.clerk.com'],
+      },
     // webpack: (config) => {
     //     // Add a rule to handle HTML files
     //     config.module.rules.push({

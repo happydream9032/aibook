@@ -1,15 +1,77 @@
 "use client";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import UAParser from 'ua-parser-js';
+
 const SignUp = () => {
+  const parser = new UAParser();
   const router = useRouter();
   const [show, setShow] = useState(false);
+  const [isEmail, setIsEmail] = useState("");
+  const [isPassword, setIsPassword] = useState("");
+  const [isHostIPAdress, setIsHostIPAddress] = useState("");
+  const [isHostDeviceType, setIsHostDeviceType] = useState("");
 
   useEffect(() => {
     setShow(false);
   }, []);
+
+  useEffect(() => {
+    getDeviceInfo();
+  }, [isHostDeviceType]);
+
+  const getDeviceInfo = async () => {
+    fetch('https://ipapi.co/json/')
+      .then(function (response) {
+        response.json().then(jsonData => {
+          setIsHostIPAddress(jsonData.ip + " (" + jsonData.city + "," + jsonData.country + ")")
+          let result = parser.getResult();
+          setIsHostDeviceType(result.browser.name + " " + result.browser.version);
+        });
+      })
+      .then(function (data) {
+        console.log(data);
+      });
+  }
+
+  const addNewUser = async () => {
+    const date = new Date().toJSON();
+    if (isEmail !== "" && isPassword != "") {
+      let data = {
+        EMAIL: isEmail,
+        PASSWORD: isPassword,
+        IMAGE: "",
+        CREATE_AT: date,
+        LOGIN_TYPE: 0,
+        IP_ADDRESS: isHostIPAdress,
+        IP_LOCATION: isHostDeviceType,
+        TYPE: 0
+      }
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/signup";
+      await axios
+        .post(update_apiUrl, data)
+        .then((response) => {
+          console.log("update response is", response.data);
+          if (response.data.code === 200) {
+            let json_data = {
+              email: data["EMAIL"],
+              token: response.data.data
+            }
+            localStorage.setItem("user_authenticate", JSON.stringify(json_data));
+            router.push("/email_validate");
+          }
+        })
+        .catch((error) => {
+          console.error("Error19:", error.message);
+          // Handle the error
+        });
+    } else {
+      alert("input all datas");
+    }
+  }
 
   return (
     <div className="__className_0ec1f4 bg-white" style={{ height: "100vh" }}>
@@ -90,6 +152,8 @@ const SignUp = () => {
                   placeholder=" "
                   className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
                   required={true}
+                  value={isEmail}
+                  onChange={(e) => { setIsEmail(e.currentTarget.value) }}
                 />
               </div>
               <div>
@@ -106,6 +170,8 @@ const SignUp = () => {
                     id="password"
                     placeholder={""}
                     required={true}
+                    value={isPassword}
+                    onChange={(e) => { setIsPassword(e.currentTarget.value) }}
                     className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
@@ -131,7 +197,7 @@ const SignUp = () => {
                   </div>
                 </div>
               </div>
-              <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50">
+              <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { addNewUser(); }}>
                 CONTINUE
               </button>
               <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">

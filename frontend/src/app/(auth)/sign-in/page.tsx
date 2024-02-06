@@ -1,6 +1,7 @@
 "use client";
+import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signIn } from "next-auth/react";
@@ -12,7 +13,43 @@ declare const window: WindowWithDataLayer;
 
 const SignIn = () => {
   const router = useRouter();
+  const [isEmail, setIsEmail] = useState("");
 
+  const handleLogin = async () => {
+    if (isEmail !== "") {
+      let data = { EMAIL: isEmail }
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/signin";
+      await axios
+        .post(update_apiUrl, data)
+        .then((response) => {
+          console.log("update response is", response.data);
+          if (response.data.code === 200) {
+            let user_array = response.data.data.user[0]
+            let json_data = {
+              id: user_array[0],
+              user_id: user_array[1],
+              email: user_array[2],
+              password: user_array[3],
+              status: user_array[4],
+              image: user_array[5],
+              create_at: user_array[6],
+              login_type: user_array[7],
+              ip_address: user_array[8],
+              ip_location: user_array[9],
+              token: response.data.data.token
+            }
+            localStorage.setItem("user_data", JSON.stringify(json_data));
+            router.push("/")
+          }
+        })
+        .catch((error) => {
+          console.error("Error19:", error.message);
+          // Handle the error
+        });
+    } else {
+      alert("insert email address");
+    }
+  }
   return (
     <div className="__className_0ec1f4 bg-white" style={{ height: "100vh" }}>
       <div className="mantine-prepend-Center-root pt-20 mantine-prepend-ojrz4j flex items-center justify-center">
@@ -100,9 +137,11 @@ const SignIn = () => {
                   id="email"
                   className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
                   required={true}
+                  value={isEmail}
+                  onChange={(e) => { setIsEmail(e.currentTarget.value) }}
                 />
               </div>
-              <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50">
+              <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleLogin(); }}>
                 CONTINUE
               </button>
               <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">

@@ -11,11 +11,16 @@ export default function Home() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const myArray = JSON.parse(localStorage.getItem("my-array"));
-    if (myArray == null) {
-      localStorage.setItem("my-array", JSON.stringify([]));
+    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    if (user_data == null) {
+      router.push("/sign-in")
+    } else {
+      const myArray = JSON.parse(localStorage.getItem("my-array"));
+      if (myArray == null) {
+        localStorage.setItem("my-array", JSON.stringify([]));
+      }
+      getTableData();
     }
-    getTableData();
   }, []);
 
   const changeTableData = async (response: any) => {

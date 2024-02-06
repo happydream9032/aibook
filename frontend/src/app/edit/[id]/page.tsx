@@ -20,8 +20,13 @@ export default function Home({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (db != null) {
-      InitDuckDB();
+    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    if (user_data == null) {
+      router.push("/sign-in")
+    } else {
+      if (db != null) {
+        InitDuckDB();
+      }
     }
   }, [db]);
 
@@ -30,6 +35,7 @@ export default function Home({ params }: { params: { id: string } }) {
       const myArray = JSON.parse(localStorage.getItem("my-array"));
       if (myArray == null) {
         localStorage.setItem("my-array", JSON.stringify([]));
+        await getTableData();
       } else {
         await myArray.map(async (item: any, index: number) => {
           let conn = await db.connect();
@@ -47,17 +53,18 @@ export default function Home({ params }: { params: { id: string } }) {
             for (let i = 0; i < len; i++) {
               bytes[i] = binary.charCodeAt(i);
             }
-
+            console.log("initial file is", item["title"])
             const blob = new Blob([bytes]);
             const file = new File([blob], String(index) + ".parquet", {
               type: "application/vnd.apache.parquet",
               lastModified: Date.now(),
             });
             await insertFile(db, file, item["title"]);
+            await getTableData();
           }
         });
       }
-      await getTableData();
+
     } catch (error) {
       console.log("222", error);
     }

@@ -129,7 +129,7 @@ const AIPrompt = (props: {
         const data = {
           schema: schema.toString(),
           prompt: promptvalue,
-          model: type,
+          model: type
         };
         const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/runprompt";
         await axios

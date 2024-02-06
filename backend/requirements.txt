@@ -5,3 +5,6 @@ flask
 flask_cors
 python-dotenv
 flask-mysqldb
+jwt
+cryptography
+flask_mail

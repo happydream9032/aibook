@@ -52,6 +52,7 @@
 		"eslint-config-next": "13.5.2",
 		"file-saver": "^2.0.5",
 		"fs": "^0.0.1-security",
+		"i": "^0.3.7",
 		"idb": "^8.0.0",
 		"indexeddb": "^0.0.0",
 		"json-bufferify": "^0.2.2",
@@ -63,6 +64,7 @@
 		"next-auth": "^4.24.5",
 		"next-themes": "^0.2.1",
 		"nock": "^13.5.0",
+		"npm": "^10.4.0",
 		"openai": "^4.24.7",
 		"papaparse": "^5.4.1",
 		"parquetjs": "^0.11.2",
@@ -81,7 +83,8 @@
 		"tailwindcss": "3.3.3",
 		"tailwindcss-animate": "^1.0.7",
 		"tls": "^0.0.1",
-		"typescript": "5.2.2"
+		"typescript": "5.2.2",
+		"ua-parser-js": "^1.0.37"
 	},
 	"devDependencies": {
 		"@types/jquery": "^3.5.29",

@@ -1,14 +1,30 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymysql import NULL
 from ask import QuackingDuck
+from utils import Utils
 from database import Database
-from flask_cors import cross_origin
-import json
+from flask_mail import Mail, Message
+from cryptography.fernet import Fernet
+from random import * 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'application/json'
 CORS(app)
+
+mail= Mail(app)
+app.config["MAIL_SERVER"]='smtp.gmail.com'  
+app.config["MAIL_PORT"] = 465      
+app.config["MAIL_USERNAME"] = 'happydream9032@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'ongsknfpdqquzbnd'  
+#app.config['MAIL_PASSWORD'] = 'picos20022304' 
+app.config['MAIL_USE_TLS'] = False  
+app.config['MAIL_USE_SSL'] = True  
+mail = Mail(app)  
 
 @app.route('/runprompt', methods=['POST'])
 def runPrompt():
@@ -75,13 +91,6 @@ def changeDBData():
     change_dbdata_result = mysqlDB.changeDBDataByID(data)
     return change_dbdata_result
 
-# @app.route('/changeuserdatabaseitem', methods=['POST'])
-# def changeUserDatabase():
-#     data = request.json
-#     mysqlDB = Database()
-#     change_dbdata_result = mysqlDB.changeDBDataByID(data)
-#     return change_dbdata_result
-
 @app.route('/importdatabook', methods=['POST'])
 def importDatabookfile():
     data = request.json
@@ -103,5 +112,94 @@ def importDatabookfile():
 
     return final_hash_result
 
+@app.route('/signup', methods=['POST'])
+def addNewUser():
+    data = request.json
+    util = Utils()
+
+    if data["TYPE"] == 0:
+        mysqlDB = Database()
+        getuser_by_email_result = mysqlDB.getUsersbyEmail(data)
+        if len(getuser_by_email_result) == 0:
+            f = Fernet(os.getenv('ENCRYPT_KEY'))
+            encrypted_string = f.encrypt(data["PASSWORD"].encode())
+            data["PASSWORD"] = encrypted_string
+            addUser_result = mysqlDB.adduser(data)
+        else:
+             return jsonify({"code" : 403, "message" : "User is exist!"})  
+        
+    otp = randint(100000,999999)   
+    mail_message = Message('Hello from the other side!', sender = 'happydream9032@gmail.com', recipients = [data['EMAIL']])
+    mail_message.body = "OTP of your account is" + str(otp)
+
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data)
+    if len(get_user_by_emal_result) > 0:
+        token = util.generate_otp_token(get_user_by_emal_result[0][2])
+        update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
+        mail.send(mail_message)
+        return jsonify({"code" : 200, "data" : token, "message" : "generate new token"}) 
+    else:
+        return jsonify({"code" : 401, "message" : "token generate fail!"})  
+
+@app.route('/signin', methods=['POST'])
+def signinUser():
+    data = request.json
+    print(data)
+    util = Utils()
+    mysqlDB = Database()
+    signin_result = mysqlDB.signinUser(data)
+    if len(signin_result) > 0 :
+        token = util.generate_user_token(signin_result[0][2])
+        response_data = {"user" : signin_result, "token" : token}
+        return jsonify({"code" : 200, "data" : response_data, "message" : "generate new token"}) 
+    elif len(signin_result) == 0:
+        return jsonify({"code" : 403, "message" : "User not exists"})
+    else:
+        return jsonify({"code" : 400, "message" : "Login Failure"})
+    
+@app.route('/changepassword', methods=['POST'])
+def changePassword():
+    data = request.json
+    print(data)
+    mysqlDB = Database()
+    changepwd_result = mysqlDB.changePassword(data)
+    return changepwd_result
+
+@app.route('/getuserbyitem', methods=['POST'])
+def getUserbyItem():
+    data = request.json
+    print(data)
+    mysqlDB = Database()
+    signin_result = mysqlDB.getUserbyItem(data)
+    return signin_result
+
+@app.route('/deleteuser', methods=['POST'])
+def deleteUser():
+    data = request.json
+    print(data)
+    mysqlDB = Database()
+    delete_user_result = mysqlDB.deleteUser(data)
+    return delete_user_result
+
+@app.route('/verify', methods=['POST'])
+def verifyEmail():
+    data = request.json
+    print(data)
+    util = Utils()
+    mysqlDB = Database()
+
+    decoded_data = util.validate_token(data["TOKEN"])
+    if decoded_data["status"] == 200:
+        validate_user_result = mysqlDB.verifyEmailAddress(decoded_data)
+        if len(validate_user_result) > 0:
+            validate_success_result = mysqlDB.validateSuccess(validate_user_result[0][0])
+            return jsonify({"code" : 200, "data": validate_user_result, "message" : "generate new token"}) 
+        else:
+            return jsonify({"code" : 403, "message" : "token generate fail!"}) 
+    elif decoded_data["status"] == 401:
+        return jsonify({"code" : 401, "message" : "token is expired"})
+    else: 
+        return jsonify({"code" : 403, "message" : "token generate fail!"}) 
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

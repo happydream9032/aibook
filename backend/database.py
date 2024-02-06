@@ -69,5 +69,47 @@ class Database:
     self.mycursor.execute(sql, val)
     self.mydb.commit()
     return data
+  
+  def adduser(self, data):
+    sql = "INSERT INTO tbl_users (user_id, email, password, status, image, created_at, login_type, ip_address, location, otp) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (0, data["EMAIL"], data["PASSWORD"], 0, data["IMAGE"], data["CREATE_AT"], data["LOGIN_TYPE"], data["IP_ADDRESS"], data["IP_LOCATION"], "")
+    self.mycursor.execute(sql, val)
+    self.mydb.commit()
+    return data["EMAIL"]
+  
+  def getUsersbyEmail(self, data):
+    sql ="SELECT * FROM tbl_users WHERE email = %s"
+    adr = (data["EMAIL"], )
+    self.mycursor.execute(sql, adr)
+    myresult = self.mycursor.fetchall()
+    return myresult
 
+  def updateOTPbyEmail(self, value, id):
+    sql = "UPDATE tbl_users SET otp = %s WHERE id = %s"
+    val = (value, id)
+    self.mycursor.execute(sql, val)
+    self.mydb.commit()
+    return value
+  
+  def validateSuccess(self, id):
+    sql = "UPDATE tbl_users SET status = %s WHERE id = %s"
+    val = (1, id)
+    self.mycursor.execute(sql, val)
+    self.mydb.commit()
+    return "success"
+  
+  def verifyEmailAddress(self, data):
+    print(">>>>>>>>>>>>>>", data)
+    sql = "SELECT * FROM tbl_users WHERE email = %s"
+    val = (data,)
+    self.mycursor.execute(sql, val)
+    myresult = self.mycursor.fetchall()
+    return myresult
+  
+  def signinUser(self, data):
+    sql = "SELECT * FROM tbl_users WHERE email = %s AND status = %s"
+    val = (data["EMAIL"], 1)
+    self.mycursor.execute(sql, val)
+    myresult = self.mycursor.fetchall()
+    return myresult
   
