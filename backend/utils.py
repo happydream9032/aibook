@@ -32,8 +32,8 @@ class Utils:
     try:
       data = jwt.decode(token, self.secret_key, algorithms=['HS256'])
       print("======================", data)
-      return json.dumps({"data" : data['public_id'], "status" : 200})
+      return data['public_id']
     except jwt.ExpiredSignature:
-      return json.dumps({"status" : 401})
+      return "401"
     except:
-      return json.dumps({"status" : 404})
+      return "403"

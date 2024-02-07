@@ -5,10 +5,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const Email_Validate = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [code, setCode] = useState("")
+  const [code, setCode] = useState("");
+  const [isStartTimer, setIsStartTimer] = useState(true)
+  const [isTime, setIsTime] = useState(60);
+
+  useEffect(() => {
+    handleSetTime();
+  }, []);
 
   const handleCodeSubmit = async () => {
     try {
@@ -74,6 +81,15 @@ const Email_Validate = () => {
     }
   }
 
+  const handleSetTime = () => {
+    let time = 60
+    setInterval(() => {
+      setIsTime(isTime - 1);
+      if (isTime === 0) {
+        setIsStartTimer(false);
+      }
+    }, 1000);
+  }
   return (
     <div className="__className_0ec1f4 bg-white" style={{ height: "100vh" }}>
       <ToastContainer />
@@ -105,18 +121,18 @@ const Email_Validate = () => {
                 type="text"
                 name="otp_number"
                 id="otp_number"
-                placeholder=""
+                placeholder="6-number of One Time Password(OTP)"
                 className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
                 required={true}
                 value={code}
                 onChange={(e) => { setCode(e.currentTarget.value) }}
               />
             </div>
-            <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleCodeSubmit(); }}>
-              CONTINUE
+            <button className="flex w-full items-center justify-center rounded-md bg-white border-2 border-indigo-600 px-5 py-2 text-base font-medium text-gray-700 shadow-submit duration-300 hover:bg-gray-400" onClick={() => { handleSetTime(); }}>
+              <span>Resend <span>{isStartTimer === false ? "" : "(" + isTime + ")"}</span></span>
             </button>
-            <button className="flex w-full items-center justify-center rounded-md bg-blue px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleResendCode(); }}>
-              Resend
+            <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleCodeSubmit(); }}>
+              Verify
             </button>
           </div>
         </div>

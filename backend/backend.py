@@ -119,12 +119,12 @@ def addNewUser():
 
     if data["TYPE"] == 0:
         mysqlDB = Database()
-        getuser_by_email_result = mysqlDB.getUsersbyEmail(data)
+        getuser_by_email_result = mysqlDB.getUsersbyEmail(data, 0)
         if len(getuser_by_email_result) == 0:
             f = Fernet(os.getenv('ENCRYPT_KEY'))
             encrypted_string = f.encrypt(data["PASSWORD"].encode())
             data["PASSWORD"] = encrypted_string
-            addUser_result = mysqlDB.adduser(data)
+            addUser_result = mysqlDB.adduser(data, 0)
         else:
              return jsonify({"code" : 403, "message" : "User is exist!"})  
         
@@ -132,7 +132,7 @@ def addNewUser():
     mail_message = Message('Hello from the other side!', sender = 'happydream9032@gmail.com', recipients = [data['EMAIL']])
     mail_message.body = "OTP of your account is" + str(otp)
 
-    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data)
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 0)
     if len(get_user_by_emal_result) > 0:
         token = util.generate_otp_token(get_user_by_emal_result[0][2])
         update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
@@ -189,17 +189,36 @@ def verifyEmail():
     mysqlDB = Database()
 
     decoded_data = util.validate_token(data["TOKEN"])
-    if decoded_data["status"] == 200:
+    if decoded_data == "403":
+        return jsonify({"code" : 403, "message" : "token generate fail!"}) 
+    elif decoded_data == "401":
+        return jsonify({"code" : 401, "message" : "token is expired"})
+    else: 
         validate_user_result = mysqlDB.verifyEmailAddress(decoded_data)
         if len(validate_user_result) > 0:
             validate_success_result = mysqlDB.validateSuccess(validate_user_result[0][0])
             return jsonify({"code" : 200, "data": validate_user_result, "message" : "generate new token"}) 
         else:
             return jsonify({"code" : 403, "message" : "token generate fail!"}) 
-    elif decoded_data["status"] == 401:
-        return jsonify({"code" : 401, "message" : "token is expired"})
-    else: 
-        return jsonify({"code" : 403, "message" : "token generate fail!"}) 
+
+@app.route('/googlelogin', methods=['POST'])
+def googleLogin():
+    data = request.json
+    print(data)
+    util = Utils()
+    mysqlDB = Database()
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 1)
+    if len(get_user_by_emal_result) == 0:
+        addUser_result = mysqlDB.adduser(data, 1)
+    
+    get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 1)
+    if len(get_user_by_emal_result1) > 0:
+        token = util.generate_user_token(get_user_by_emal_result1[0][2])
+        response_data = {"id" : get_user_by_emal_result1[0][0], "token" : token}
+        return jsonify({"code" : 200, "data" : response_data, "message" : "google user is registerd"}) 
+    else:
+        return jsonify({"code" : 401, "message" : "token generate fail!"})  
+
     
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

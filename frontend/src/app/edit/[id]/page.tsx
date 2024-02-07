@@ -11,7 +11,7 @@ import { setDuckBookState } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
 
-export default function Home({ params }: { params: { id: string } }) {
+export default function Edit({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
   const { db } = useDuckDb();
 
@@ -21,8 +21,9 @@ export default function Home({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     let user_data = JSON.parse(localStorage.getItem("user_data"));
-    if (user_data == null) {
-      router.push("/sign-in")
+    console.log("user_data is", user_data);
+    if (user_data === null || Object.entries(user_data).length === 0) {
+      router.push("/sign-in");
     } else {
       if (db != null) {
         InitDuckDB();
@@ -33,13 +34,12 @@ export default function Home({ params }: { params: { id: string } }) {
   const InitDuckDB = async () => {
     try {
       const myArray = JSON.parse(localStorage.getItem("my-array"));
-      if (myArray == null) {
+      if (myArray.length === 0 || myArray == null) {
         localStorage.setItem("my-array", JSON.stringify([]));
         await getTableData();
       } else {
         await myArray.map(async (item: any, index: number) => {
           let conn = await db.connect();
-
           let table_count_query = await conn.query(
             `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
           );
@@ -78,7 +78,7 @@ export default function Home({ params }: { params: { id: string } }) {
     await axios
       .post(select_apiUrl, data)
       .then((response) => {
-        console.log("response is", response.data);
+        console.log("response1 is", response.data);
 
         let final_data: any = [];
         response.data.map((item: any) => {
@@ -100,6 +100,7 @@ export default function Home({ params }: { params: { id: string } }) {
           temp_data["HASH"] = String(item[6]);
           final_data.push(temp_data);
         });
+        console.log("store duckbook is", final_data[0])
         dispatch(setDuckBookState(final_data[0]));
       })
       .catch((error) => {

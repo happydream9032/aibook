@@ -32,9 +32,6 @@ const SignUp = () => {
           setIsHostDeviceType(result.browser.name + " " + result.browser.version);
         });
       })
-      .then(function (data) {
-        console.log(data);
-      });
   }
 
   const addNewUser = async () => {

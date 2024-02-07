@@ -70,16 +70,23 @@ class Database:
     self.mydb.commit()
     return data
   
-  def adduser(self, data):
+  def adduser(self, data, status):
     sql = "INSERT INTO tbl_users (user_id, email, password, status, image, created_at, login_type, ip_address, location, otp) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    val = (0, data["EMAIL"], data["PASSWORD"], 0, data["IMAGE"], data["CREATE_AT"], data["LOGIN_TYPE"], data["IP_ADDRESS"], data["IP_LOCATION"], "")
+    val = (0, data["EMAIL"], data["PASSWORD"], status, data["IMAGE"], data["CREATE_AT"], data["LOGIN_TYPE"], data["IP_ADDRESS"], data["IP_LOCATION"], "")
     self.mycursor.execute(sql, val)
     self.mydb.commit()
     return data["EMAIL"]
   
-  def getUsersbyEmail(self, data):
-    sql ="SELECT * FROM tbl_users WHERE email = %s"
-    adr = (data["EMAIL"], )
+  def getUsersbyEmail(self, data, type):
+    if type == 0:
+      sql ="SELECT * FROM tbl_users WHERE login_type = %s AND email = %s"
+      adr = (0, data["EMAIL"] )
+    elif type == 1:
+      sql ="SELECT * FROM tbl_users WHERE login_type = %s AND email = %s"
+      adr = (1, data["EMAIL"] )
+    elif type == 2:
+      sql ="SELECT * FROM tbl_users WHERE email = %s"
+      adr = (data["EMAIL"], )
     self.mycursor.execute(sql, adr)
     myresult = self.mycursor.fetchall()
     return myresult

@@ -41,20 +41,22 @@ const AIPrompt = (props: {
   useEffect(() => {
     let type = props.type;
     if (type.type === 4 && type.value != "") {
-      let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
+      let json_value = JSON.parse(type.value);
+      let isSQLQuery = json_value.query;
       let json_tabledata: any = {
         db: props.db,
         type: type.type,
-        isPrompt: type.value,
+        isPrompt: json_value.prompt,
         index: props.index,
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
         istablename: type.path.table_name,
         isreturn: 0,
       };
+      setPromptValue(json_value.prompt)
       setTableData(json_tabledata);
-      setIsSQLQuery(type.value);
-      handleRunQuery(type.value, true);
+      setIsSQLQuery(json_value.query);
+      handleRunQuery(json_value.query, true);
       setIsLoading(true);
     }
   }, [props]);

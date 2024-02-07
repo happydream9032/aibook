@@ -12,8 +12,8 @@ export default function Home() {
 
   useEffect(() => {
     let user_data = JSON.parse(localStorage.getItem("user_data"));
-    if (user_data == null) {
-      router.push("/sign-in")
+    if (user_data == null || Object.entries(user_data).length === 0) {
+      router.push("/sign-in");
     } else {
       const myArray = JSON.parse(localStorage.getItem("my-array"));
       if (myArray == null) {

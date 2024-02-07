@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "server.js"
-  ],
+, "src/util/temp.js"  ],
   "exclude": ["node_modules"]
 }

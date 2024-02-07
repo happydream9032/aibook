@@ -4,6 +4,7 @@ import RunSQL from "./RunSQL";
 import AIPrompt from "./AIPrompt";
 import SampleData from "./SampleData";
 import DropdownModal from "./DropdownModal";
+import DrawChart from "./DrawChart";
 import { useDuckDb } from "duckdb-wasm-kit";
 
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
@@ -26,11 +27,18 @@ const TypingComponent = (props: {
   const dispatch = useAppDispatch();
   const duckbook = useAppSelector((state) => state.navbarReducer.data);
   const { db, loading, error } = useDuckDb();
-  const element_data = JSON.parse(duckbook["DATA"]);
   const [isShowChildren, setIsShowChildren] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); //show dropmenu
   const [value, setValue] = useState(""); // current text of input component
-  const [elements, setElements] = useState<element_type[]>(element_data);
+  const [elements, setElements] = useState<element_type[]>({
+    type: "",
+    value: "",
+    path: {
+      table_name: "",
+      filepath: "",
+      filesize: ""
+    }
+  });
 
   useEffect(() => {
     if (value === "/") {
@@ -47,12 +55,15 @@ const TypingComponent = (props: {
   }, [db]);
 
   useEffect(() => {
-    elements.map((item, index) => {
+    console.log("111", duckbook)
+    const element_data = JSON.parse(duckbook["DATA"]);
+    element_data.map((item: any, index: number) => {
       if (item == null) {
-        elements.splice(index, 1);
+        element_data.splice(index, 1);
       }
     });
-  }, []);
+    setElements(element_data);
+  }, [duckbook]);
 
   const closeModal = () => {
     setIsDropdownOpen(false);
@@ -150,7 +161,14 @@ const TypingComponent = (props: {
             }
           />
         ) : item.type === 3 ? (
-          <div></div>
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
         ) : item.type === 4 ? (
           <AIPrompt
             type={item}

@@ -64,15 +64,19 @@ const ResultTable = (props: {
     } else if (props.data.type === 2) {
       item["value"] = props.data.isSQLQuery;
     } else if (props.data.type === 4) {
-      item["value"] = props.data.isPrompt;
+      let data = {
+        prompt: props.data.isPrompt,
+        query: props.data.isSQLQuery
+      }
+      item["value"] = JSON.stringify(data);
     } else if (props.data.type === 141) {
-      item["value"] = props.data.isPrompt;
+      item["value"] = "";
     } else if (props.data.type === 142) {
-      item["value"] = props.data.isPrompt;
+      item["value"] = "";
     } else if (props.data.type === 143) {
-      item["value"] = props.data.isPrompt;
+      item["value"] = "";
     } else if (props.data.type === 144) {
-      item["value"] = props.data.isPrompt;
+      item["value"] = "";
     }
     item["type"] = props.data.type;
     item["path"]["table_name"] = props.data.istablename;
