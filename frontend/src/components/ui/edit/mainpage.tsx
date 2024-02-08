@@ -4,6 +4,7 @@ import axios from "axios";
 
 import TypingComponent from "./widgets/TypingComponent";
 import RightSidebar from "@/components/layout/Sidebar/RightSidebar";
+import RightChartSidebar from "@/components/layout/Sidebar/RightChartSidebar";
 
 import { useRouter } from "next/navigation";
 import { setChangeDuckBookName } from "@/redux/features/navbar-slice";
@@ -18,6 +19,8 @@ const MainPage = (props: { id: string }) => {
   const [dbname, setDbName] = useState("");
   const [isComponetData, setIsComponetData] = useState({});
   const [isModalShow, setIsModalShow] = useState(false);
+  const [isComponetData1, setIsComponetData1] = useState({});
+  const [isModalShow1, setIsModalShow1] = useState(false);
 
   useEffect(() => {
     setDbName(duckbook["DB_NAME"]);
@@ -91,7 +94,13 @@ const MainPage = (props: { id: string }) => {
 
   const handleComponetData = async (data: any) => {
     await setIsComponetData(data);
+    setIsModalShow1(false);
     setIsModalShow(true);
+  };
+  const handleComponetData1 = async (data: any) => {
+    await setIsComponetData1(data);
+    setIsModalShow(false);
+    setIsModalShow1(true);
   };
   return (
     <main className="mantine-prepend-1682jzp">
@@ -103,7 +112,9 @@ const MainPage = (props: { id: string }) => {
           }}
         >
           <div className="min-w-[308px]" />
-          <div className="flex-1 text-sm text-lg text-black px-4">
+          <div className="flex-1 text-sm text-lg text-black px-4" onClick={() => {
+            setIsModalShow1(false);
+          }}>
             <div
               contentEditable={true}
               suppressContentEditableWarning={true}
@@ -134,11 +145,13 @@ const MainPage = (props: { id: string }) => {
               <TypingComponent
                 showDropMenu={true}
                 selectComponentData={(data: any) => handleComponetData(data)}
+                selectComponentData1={(data: any) => handleComponetData1(data)}
               />
             </div>
           </div>
           <div className="min-w-[302px] max-w-[352px]">
             {isModalShow && <RightSidebar table_data={isComponetData} />}
+            {isModalShow1 && <RightChartSidebar chart_data={isComponetData1} />}
           </div>
         </div>
       </div>

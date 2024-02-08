@@ -23,6 +23,7 @@ interface element_type {
 const TypingComponent = (props: {
   showDropMenu: boolean;
   selectComponentData: (data: any) => void;
+  selectComponentData1: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
   const duckbook = useAppSelector((state) => state.navbarReducer.data);
@@ -88,6 +89,9 @@ const TypingComponent = (props: {
 
   const handleSeletedComponentData = (data: any) => {
     props.selectComponentData(data);
+  };
+  const handleSeletedComponentData1 = (data: any) => {
+    props.selectComponentData1(data);
   };
 
   const handleOnKeyDown = (event: KeyboardEvent) => {
@@ -165,8 +169,9 @@ const TypingComponent = (props: {
             type={item}
             index={index}
             db={db}
+            chart_type={0}
             getSelectedComponentData={(data: any) =>
-              handleSeletedComponentData(data)
+              handleSeletedComponentData1(data)
             }
           />
         ) : item.type === 4 ? (
@@ -225,7 +230,7 @@ const TypingComponent = (props: {
       <div>
         {isShowChildren && contents()}
         <input
-          className="text-lg py-4 w-full border border-transparent focus:outline-none"
+          className="text-lg py-4 w-full border-none"
           type="text"
           value={value}
           placeholder="Type '/' to show the dropdown"
