@@ -23,7 +23,7 @@ class Utils:
   def generate_user_token(self, data):
     token = jwt.encode({
             'public_id': data,
-            'exp' : datetime.utcnow() + timedelta(minutes=1440)
+            'exp' : datetime.utcnow() + timedelta(minutes=21600)
         }, self.secret_key, algorithm='HS256')
     
     return token

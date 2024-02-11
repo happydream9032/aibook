@@ -1,12 +1,12 @@
 import os
-from flask import Flask, request, jsonify
+import hashlib
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from pymysql import NULL
 from ask import QuackingDuck
 from utils import Utils
 from database import Database
 from flask_mail import Mail, Message
-from cryptography.fernet import Fernet
 from random import * 
 from dotenv import load_dotenv
 
@@ -17,13 +17,14 @@ app.config['CORS_HEADERS'] = 'application/json'
 CORS(app)
 
 mail= Mail(app)
-app.config["MAIL_SERVER"]='smtp.gmail.com'  
-app.config["MAIL_PORT"] = 465      
-app.config["MAIL_USERNAME"] = 'happydream9032@gmail.com'  
-app.config['MAIL_PASSWORD'] = 'ongsknfpdqquzbnd'  
-#app.config['MAIL_PASSWORD'] = 'picos20022304' 
-app.config['MAIL_USE_TLS'] = False  
-app.config['MAIL_USE_SSL'] = True  
+app.config["SECRET_KEY"] = 'top-secret!'  
+app.config["MAIL_SERVER"]='smtp.sendgrid.net'  
+app.config["MAIL_PORT"] = 587      
+#app.config['MAIL_PASSWORD'] = 'vinpjvdslfigvoqu'  
+app.config['MAIL_USE_TLS'] = True 
+app.config['MAIL_USERNAME'] = 'apikey'
+app.config['MAIL_PASSWORD'] = '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'
+app.config['MAIL_DEFAULT_SENDER'] = 'everify@passionbytes.com' 
 mail = Mail(app)  
 
 @app.route('/runprompt', methods=['POST'])
@@ -47,7 +48,8 @@ def runPrompt():
 @app.route('/getdbtable', methods=['POST'])
 def getDBTable():
     mysqlDB = Database()
-    select_query_result = mysqlDB.getDBTableData()
+    data = request.json
+    select_query_result = mysqlDB.getDBTableData(data)
     return select_query_result
 
 @app.route('/insertdbtable', methods=['POST'])
@@ -116,23 +118,42 @@ def importDatabookfile():
 def addNewUser():
     data = request.json
     util = Utils()
-
-    if data["TYPE"] == 0:
-        mysqlDB = Database()
-        getuser_by_email_result = mysqlDB.getUsersbyEmail(data, 0)
-        if len(getuser_by_email_result) == 0:
-            f = Fernet(os.getenv('ENCRYPT_KEY'))
-            encrypted_string = f.encrypt(data["PASSWORD"].encode())
-            data["PASSWORD"] = encrypted_string
-            addUser_result = mysqlDB.adduser(data, 0)
+    mysqlDB = Database()
+    getuser_by_email_result = mysqlDB.getUsersbyEmail(data, 3)
+    if len(getuser_by_email_result) == 0:
+        hash_value = hashlib.md5(data["PASSWORD"].encode()).hexdigest()
+        data["PASSWORD"] = hash_value
+        addUser_result = mysqlDB.adduser(data, 0)
+        otp = randint(100000,999999)   
+        mail_message = Message('Hello from the other side!', recipients = [data['EMAIL']])
+        mail_message.html = ('<h1>Twilio SendGrid Test Email</h1>'
+                    '<p>Congratulations! You have sent a test email with '
+                    '<b>Twilio SendGrid</b>!</p>')
+        mail_message.body = "OTP of your account is" + str(otp)
+        print("sdfsd")
+        mail.send(mail_message)
+        get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
+        if len(get_user_by_emal_result) > 0:
+            token = util.generate_otp_token(get_user_by_emal_result[0][2])
+            update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
+            return jsonify({"code" : 200, "data" : token, "message" : "generate new token"}) 
         else:
-             return jsonify({"code" : 403, "message" : "User is exist!"})  
-        
+            return jsonify({"code" : 401, "message" : "token generate fail!"})
+    else:
+        return jsonify({"code" : 403, "message" : "User is exist!"})
+      
+@app.route('/resetOTPcode', methods=['POST'])
+def resetOTPCode():
+    data = request.json
+    mysqlDB = Database()
+    util = Utils()
+
     otp = randint(100000,999999)   
-    mail_message = Message('Hello from the other side!', sender = 'happydream9032@gmail.com', recipients = [data['EMAIL']])
+    print(str(otp), data["EMAIL"])
+    mail_message = Message('Hello from the other side!', sender = 'everify@passionbytes.com', recipients = [data['EMAIL']])
     mail_message.body = "OTP of your account is" + str(otp)
 
-    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 0)
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
     if len(get_user_by_emal_result) > 0:
         token = util.generate_otp_token(get_user_by_emal_result[0][2])
         update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
@@ -147,7 +168,7 @@ def signinUser():
     print(data)
     util = Utils()
     mysqlDB = Database()
-    signin_result = mysqlDB.signinUser(data)
+    signin_result = mysqlDB.getUsersbyEmail(data, 2)
     if len(signin_result) > 0 :
         token = util.generate_user_token(signin_result[0][2])
         response_data = {"user" : signin_result, "token" : token}
@@ -160,27 +181,38 @@ def signinUser():
 @app.route('/changepassword', methods=['POST'])
 def changePassword():
     data = request.json
-    print(data)
     mysqlDB = Database()
-    changepwd_result = mysqlDB.changePassword(data)
-    return changepwd_result
+    encrypted_string = hashlib.md5(data["CURRENT_PASSWORD"].encode()).hexdigest()
 
-@app.route('/getuserbyitem', methods=['POST'])
-def getUserbyItem():
+    get_allusers_by_id = mysqlDB.getAllUsersById(0, data["ID"])
+    print(get_allusers_by_id[0][3], encrypted_string)
+
+    if get_allusers_by_id[0][3] == "" or get_allusers_by_id[0][3] == encrypted_string:
+        encrypted_string1 = hashlib.md5(data["NEW_PASSWORD"].encode()).hexdigest()
+        changepwd_result = mysqlDB.changeUserPassword(encrypted_string1, data["ID"])
+        return jsonify({"code" : 200, "data" : encrypted_string1,"message" : "Changing password is successful!"})
+    else:
+        return jsonify({"code" : 401, "message" : "can't find user data"}) 
+
+@app.route('/getUsersbyEmail', methods=['POST'])
+def getUsersbyEmail():
     data = request.json
     print(data)
     mysqlDB = Database()
-    signin_result = mysqlDB.getUserbyItem(data)
+    signin_result = mysqlDB.getUsersbyEmail(data, 3)
     return signin_result
 
 @app.route('/deleteuser', methods=['POST'])
 def deleteUser():
     data = request.json
-    print(data)
     mysqlDB = Database()
-    delete_user_result = mysqlDB.deleteUser(data)
-    return delete_user_result
-
+    get_allusers_by_id = mysqlDB.getUsersbyEmail(data, 3)
+    if len(get_allusers_by_id) > 0:
+        for i in range(len(get_allusers_by_id)):
+            delete_user_result = mysqlDB.deleteUserData(get_allusers_by_id[i][0])
+        return jsonify({"code" : 200, "message" : "generate new token"}) 
+    else:
+        return jsonify({"code" : 401, "message" : "Can't find user data"})
 @app.route('/verify', methods=['POST'])
 def verifyEmail():
     data = request.json
@@ -209,6 +241,8 @@ def googleLogin():
     mysqlDB = Database()
     get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 1)
     if len(get_user_by_emal_result) == 0:
+        encrypted_string = hashlib.md5(data["PASSWORD"].encode()).hexdigest()
+        data["PASSWORD"] = encrypted_string
         addUser_result = mysqlDB.adduser(data, 1)
     
     get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 1)
@@ -219,6 +253,35 @@ def googleLogin():
     else:
         return jsonify({"code" : 401, "message" : "token generate fail!"})  
 
-    
+@app.route('/changeavatar', methods=['POST', 'GET'])
+def changeAvatar():
+    data = request.json
+    mysqlDB = Database()
+    get_allusers_by_id = mysqlDB.getAllUsersById(0, data["ID"])
+    if len(get_allusers_by_id) > 0:
+        for i in range(len(get_allusers_by_id)):
+            upload_file_result = mysqlDB.uploadfile(get_allusers_by_id[i][0], data["FILENAME"])
+        return jsonify({"code" : 200, "message" : "File uploaded successfully"}) 
+    else :
+        return jsonify({"code" : 401, "message" : "can't find user data"})
+
+@app.route('/uploads', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return 'No file part in the request', 400
+    file = request.files['file']
+
+    if file.filename == '':
+        return 'No selected image file', 400
+    if file:
+        file.save('uploads/' + file.filename)
+        return jsonify({"code" : 200, "message" : "File uploaded successfully"}) 
+    else:
+        return jsonify({"code" : 401, "message" : "Can't upload image"})
+
+@app.route('/files/<filename>', methods=['POST', 'GET'])
+def get_uploaded_file(filename):
+    return send_from_directory('uploads', filename)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

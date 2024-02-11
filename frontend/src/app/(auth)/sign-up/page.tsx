@@ -38,6 +38,7 @@ const SignUp = () => {
     const date = new Date().toJSON();
     if (isEmail !== "" && isPassword != "") {
       let data = {
+        USER_ID: 0,
         EMAIL: isEmail,
         PASSWORD: isPassword,
         IMAGE: "",

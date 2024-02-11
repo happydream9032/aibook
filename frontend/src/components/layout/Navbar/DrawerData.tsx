@@ -130,6 +130,7 @@ const DrawerData = ({ id }) => {
   };
 
   const insertTableRecorder = async () => {
+    let temp_userdata = JSON.parse(localStorage.getItem("user_data"))
     const date = new Date().toJSON();
     let path = { table_name: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };
@@ -138,7 +139,7 @@ const DrawerData = ({ id }) => {
     temp.push(componet);
 
     let data = {
-      USER_ID: "23443464",
+      USER_ID: temp_userdata.id,
       TABLE_NAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),

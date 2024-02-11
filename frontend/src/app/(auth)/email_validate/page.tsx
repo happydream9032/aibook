@@ -31,7 +31,6 @@ const Email_Validate = () => {
           console.log("update response is", response.data);
           if (response.data.code === 200) {
             toast.success("User Registered!", { position: "top-right" });
-            router.push("/sign-in");
           } else if (response.data.code === 401) {
             toast.error("Token is expired!", { position: "top-right" });
           } else if (response.data.code === 403) {
@@ -56,7 +55,7 @@ const Email_Validate = () => {
         EMAIL: user["email"],
         TYPE: 1
       }
-      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/signup";
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/resetOTPcode";
       await axios
         .post(update_apiUrl, data)
         .then((response) => {
@@ -128,7 +127,7 @@ const Email_Validate = () => {
                 onChange={(e) => { setCode(e.currentTarget.value) }}
               />
             </div>
-            <button className="flex w-full items-center justify-center rounded-md bg-white border-2 border-indigo-600 px-5 py-2 text-base font-medium text-gray-700 shadow-submit duration-300 hover:bg-gray-400" onClick={() => { handleSetTime(); }}>
+            <button className="flex w-full items-center justify-center rounded-md bg-white border-2 border-indigo-600 px-5 py-2 text-base font-medium text-gray-700 shadow-submit duration-300 hover:bg-gray-400" onClick={() => { handleResendCode(); }}>
               <span>Resend <span>{isStartTimer === false ? "" : "(" + isTime + ")"}</span></span>
             </button>
             <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleCodeSubmit(); }}>

@@ -3,10 +3,11 @@ import axios from "axios";
 import Image from "next/image";
 import UAParser from 'ua-parser-js';
 import { useRouter } from "next/navigation";
-import { redirect } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast, ToastContainer } from "react-toastify";
+import { setUserState } from "@/redux/features/user-slice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import "react-toastify/dist/ReactToastify.css";
 
 type WindowWithDataLayer = Window & {
@@ -17,6 +18,7 @@ declare const window: WindowWithDataLayer;
 const SignIn = () => {
   const router = useRouter();
   const parser = new UAParser();
+  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const [isEmail, setIsEmail] = useState("");
   const [isHostIPAdress, setIsHostIPAddress] = useState("");
@@ -25,10 +27,10 @@ const SignIn = () => {
 
   useEffect(() => {
     let user_data = JSON.parse(localStorage.getItem("user_data"));
-    if (user_data == null) {
+    if (user_data !== null) {
       setIsUserData(user_data);
-      getDeviceInfo();
     }
+    getDeviceInfo();
   }, []);
 
   const getDeviceInfo = async () => {
@@ -45,45 +47,53 @@ const SignIn = () => {
       });
   }
 
-  const handleGoogleLogin = async (user: any) => {
-    const date = new Date().toJSON();
-    let data = {
-      EMAIL: user["email"],
-      PASSWORD: "",
-      IMAGE: user["image"],
-      CREATE_AT: date,
-      LOGIN_TYPE: 1,
-      IP_ADDRESS: isHostIPAdress,
-      IP_LOCATION: isHostDeviceType,
-    }
-    let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/googlelogin";
-    await axios
-      .post(update_apiUrl, data)
-      .then((response) => {
-        console.log("google login response is", response.data);
-        if (response.data.code === 200) {
-          let json_data = {
-            id: response.data.data.id,
-            user_id: 0,
-            email: user["email"],
-            password: "",
-            status: 1,
-            image: user["image"],
-            create_at: date,
-            login_type: 1,
-            ip_address: isHostIPAdress,
-            ip_location: isHostDeviceType,
-            token: response.data.data.token
+  const handleGoogleLogin = async () => {
+    if (session) {
+      let user = session["user"];
+      const date = new Date().toJSON();
+      let data = {
+        USER_ID: 0,
+        EMAIL: user["email"],
+        PASSWORD: "",
+        IMAGE: "",
+        CREATE_AT: date,
+        LOGIN_TYPE: 1,
+        IP_ADDRESS: isHostIPAdress,
+        IP_LOCATION: isHostDeviceType,
+      }
+      console.log(data);
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/googlelogin";
+      await axios
+        .post(update_apiUrl, data)
+        .then((response) => {
+          console.log("google login response is", response.data);
+          if (response.data.code === 200) {
+            let json_data = {
+              id: response.data.data.id,
+              user_id: 0,
+              name: user["name"],
+              email: user["email"],
+              password: "",
+              status: 1,
+              image: "",
+              create_at: date,
+              login_type: 1,
+              ip_address: isHostIPAdress,
+              ip_location: isHostDeviceType,
+              token: response.data.data.token
+            }
+
+            dispatch(setUserState(json_data));
+            localStorage.setItem("user_data", JSON.stringify(json_data));
+            toast.success("Login success!", { position: "top-right" });
+            router.push("/");
           }
-          localStorage.setItem("user_data", JSON.stringify(json_data));
-          toast.success("Login success!", { position: "top-right" });
-          router.push("/");
-        }
-      })
-      .catch((error) => {
-        console.error("Error19:", error.message);
-        // Handle the error
-      });
+        })
+        .catch((error) => {
+          console.error("Error19:", error.message);
+          // Handle the error
+        });
+    }
   }
 
   const handleLogin = async () => {
@@ -97,9 +107,11 @@ const SignIn = () => {
             console.log("update response is", response.data);
             if (response.data.code === 200) {
               let user_array = response.data.data.user[0]
+              let temp_name = user_array[2].split("@");
               let json_data = {
                 id: user_array[0],
                 user_id: user_array[1],
+                name: temp_name[0],
                 email: user_array[2],
                 password: user_array[3],
                 status: user_array[4],
@@ -110,6 +122,7 @@ const SignIn = () => {
                 ip_location: user_array[9],
                 token: response.data.data.token
               }
+              dispatch(setUserState(json_data));
               localStorage.setItem("user_data", JSON.stringify(json_data));
               toast.success("Login success!", { position: "top-right" });
               router.push("/");
@@ -130,16 +143,10 @@ const SignIn = () => {
   const handleGoogleLoginSubmit = () => {
     if (isUserData == null) {
       signIn("google");
-      if (session) {
-        let user = session["user"];
-        if (isUserData == null) {
-          window.location.reload();
-          handleGoogleLogin(user);
-        }
-        // setCookie("logged", "true", { maxAge: 60 * 60 * 24 * 30 });
-      }
+      handleGoogleLogin();
     } else {
       toast.error("User already Logined!", { position: "top-right" });
+      router.push("/")
     }
   }
   return (

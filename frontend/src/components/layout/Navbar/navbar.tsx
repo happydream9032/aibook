@@ -72,8 +72,10 @@ const Navbar1 = (props: { id: string }) => {
   const { db, loading, error } = useDuckDb();
   const type = useAppSelector((state) => state.todoReducer.type);
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
+  const userdata: any = useAppSelector((state) => state.userReducer.data);
   const dispatch = useAppDispatch();
 
+  const [userData, setUserData] = useState({})
   const [hashData, setHashData] = useState(props.id);
   const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false);
   const [isDeleteNumber, setIsDeleteNumber] = useState(0);
@@ -100,11 +102,18 @@ const Navbar1 = (props: { id: string }) => {
   };
   useEffect(() => {
     window.addEventListener("scroll", handleStickyNavbar);
-  });
+  }, []);
 
   useEffect(() => {
+    console.log(">>>>>>>>>>>>>>", duckbook);
+    let temp = localStorage.getItem("user_data");
+    setUserData(JSON.parse(temp));
     setIsComponentShow(true);
   }, [duckbook]);
+
+  useEffect(() => {
+    console.log(">>>>>>>>>1>>>>>", userdata);
+  }, [userdata]);
 
   const toggleTypeDropdown = () => {
     setIsOpenGPTType(!isOpenGPTType);
@@ -355,6 +364,11 @@ const Navbar1 = (props: { id: string }) => {
     }
 
   }
+
+  const changeProfileImage = (url: string) => {
+    console.log("==", url)
+    setUserData((userData) => ({ ...userData, image: url }));
+  }
   return (
     <div>
       {isComponentShow && (<header
@@ -586,19 +600,20 @@ const Navbar1 = (props: { id: string }) => {
                   onClick={toggleUserManagement}
                   title={""}
                 >
-                  <div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-lime-950 rounded-full">
-                    <span className="font-medium text-xl text-white">JL</span>
-                  </div>
+                  {userData.image === "" ? (<div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-lime-950 rounded-full mt-2">
+                    <span className="font-medium text-xl text-white">{userData.name.charAt(0)}</span>
+                  </div>) : (<Image className="rounded-full w-10 h-10" src={process.env.NEXT_PUBLIC_API_BASE_URL + "/files/" + userData.image} width={40} height={10} alt="img" />)}
                 </button>
                 {isUserManagement && (
                   <div className="top-center z-10 absolute right-0 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 flex flex-col gap-1">
                     <div className="flex justify-start mb-2 px-6 py-2 mt-5">
-                      <div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-lime-950 rounded-full mt-2">
-                        <span className="font-medium text-xl text-white">JL</span>
-                      </div>
+                      {userData.image === "" ? (<div className="relative inline-flex items-center justify-center w-10 h-10 overflow-hidden bg-lime-950 rounded-full mt-2">
+                        <span className="font-medium text-xl text-white">{userData.name.charAt(0)}</span>
+                      </div>) : (<Image className="mt-2 rounded-full w-10 h-10" src={process.env.NEXT_PUBLIC_API_BASE_URL + "/files/" + userData.image} width={60} height={15} alt="img" />)}
+
                       <div className="flex flex-col flex-1">
-                        <span className="font-bold px-5 py-1 item-center text-sm text-gray-700">James Lee</span>
-                        <span className="font-medium px-5 py-1 item-center text-sm text-gray-400">happydream9032@gmail.com</span>
+                        <span className="font-bold px-5 py-1 item-center text-sm text-gray-700">{userData.name}</span>
+                        <span className="font-medium px-5 py-1 item-center text-sm text-gray-400">{userData.email}</span>
                       </div>
                     </div>
                     <button className="flex py-3 px-10 justify-start bg-white hover:bg-gray-200 text-sm text-gray-400 w-full" onClick={() => { setIsShowUserDialog(true) }}><Image src={SettingIcon} alt="" width="16" height="16" className="mr-10" />Manage Account</button>
@@ -631,7 +646,7 @@ const Navbar1 = (props: { id: string }) => {
                 selectDeleteRecoder={() => handleSelectDeleteRecorder()}
               />
             )}
-          {isShowUserDialog && (<MainSettingsComponent id={hashData} setDialogStatus={() => handleUserManagementDialog()} />)}
+          {isShowUserDialog && (<MainSettingsComponent id={hashData} setDialogStatus={() => handleUserManagementDialog()} changeImage={(url: string) => changeProfileImage(url)} />)}
         </div>
       </header>)}
     </div>

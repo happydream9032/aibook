@@ -22,8 +22,8 @@ export default function Edit({ params }: { params: { id: string } }) {
   useEffect(() => {
     let user_data = JSON.parse(localStorage.getItem("user_data"));
     console.log("user_data is", user_data);
-    if (user_data === null || Object.entries(user_data).length === 0) {
-      router.push("/sign-in");
+    if (user_data === null) {
+      router.push("/");
     } else {
       if (db != null) {
         InitDuckDB();
@@ -137,9 +137,14 @@ export default function Edit({ params }: { params: { id: string } }) {
   };
 
   const getTableData = async () => {
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
+    let data = {
+      ID: user_data.id
+    }
     let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getdbtable";
     await axios
-      .post(select_apiUrl)
+      .post(select_apiUrl, data)
       .then((response) => {
         console.log("response is", response.data);
         if (response.data.length == 0) {

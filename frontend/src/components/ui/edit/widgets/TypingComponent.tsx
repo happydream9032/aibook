@@ -7,6 +7,7 @@ import DropdownModal from "./DropdownModal";
 import DrawChart from "./DrawChart";
 import { useDuckDb } from "duckdb-wasm-kit";
 
+import RightChartSidebar from "@/components/layout/Sidebar/RightChartSidebar";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
@@ -23,7 +24,6 @@ interface element_type {
 const TypingComponent = (props: {
   showDropMenu: boolean;
   selectComponentData: (data: any) => void;
-  selectComponentData1: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
   const duckbook = useAppSelector((state) => state.navbarReducer.data);
@@ -89,9 +89,6 @@ const TypingComponent = (props: {
 
   const handleSeletedComponentData = (data: any) => {
     props.selectComponentData(data);
-  };
-  const handleSeletedComponentData1 = (data: any) => {
-    props.selectComponentData1(data);
   };
 
   const handleOnKeyDown = (event: KeyboardEvent) => {
@@ -170,9 +167,6 @@ const TypingComponent = (props: {
             index={index}
             db={db}
             chart_type={0}
-            getSelectedComponentData={(data: any) =>
-              handleSeletedComponentData1(data)
-            }
           />
         ) : item.type === 4 ? (
           <AIPrompt
@@ -226,7 +220,7 @@ const TypingComponent = (props: {
     ));
   };
   return (
-    <div>
+    <div >
       <div>
         {isShowChildren && contents()}
         <input
