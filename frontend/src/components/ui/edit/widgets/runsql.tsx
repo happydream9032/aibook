@@ -13,6 +13,18 @@ import "react-toastify/dist/ReactToastify.css";
 import RunSQLQueryIcon from '@/assets/images/icons/RunSQLQueryIcon.svg';
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 
+interface element_type {
+  db: any,
+  type: number,
+  isPrompt: string,
+  index: number,
+  isfilename: string,
+  isSQLQuery: string,
+  isfilesize: number,
+  istablename: string,
+  isreturn: number,
+}
+
 const RunSQL = (props: {
   type: any;
   index: number;
@@ -25,7 +37,17 @@ const RunSQL = (props: {
 
   const [isSQLQuery, setIsSQLQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [tableData, setTableData] = useState({});
+  const [tableData, setTableData] = useState<element_type>({
+    db: null,
+    type: 0,
+    isPrompt: "",
+    index: 0,
+    isfilename: "",
+    isSQLQuery: "",
+    istablename: "",
+    isfilesize: 0,
+    isreturn: 0,
+  });
   const [isShowComponent, setIsShowComponent] = useState(true);
   const [exportFileName, setExportFileName] = useState("aiprompt");
   const [downloadFileCount, setDownloadFileCount] = useState(0);
@@ -210,7 +232,6 @@ const RunSQL = (props: {
                   type="button"
                   title={""}
                   onClick={() => {
-                    setTableData({});
                     handleRunQuery();
                   }}
                 >

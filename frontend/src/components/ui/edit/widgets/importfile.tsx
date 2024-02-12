@@ -14,6 +14,18 @@ import MichelinRestaurantIcon from "@/assets/images/icons/MichaelRestaurant.svg"
 import YCombinarStartupIcon from "@/assets/images/icons/YCombinatorIcon.svg";
 import SampleDataIcon from "@/assets/images/icons/SampleData.svg";
 
+interface element_type {
+  db: any,
+  type: number,
+  isPrompt: string,
+  index: number,
+  isfilename: string,
+  isSQLQuery: string,
+  isfilesize: number,
+  istablename: string,
+  isreturn: number,
+}
+
 const Importfile = (props: {
   type: any;
   index: number;
@@ -33,7 +45,17 @@ const Importfile = (props: {
   const [isloading2, setIsLoading2] = useState(false);
   const [isfetchurl, setIsFetchUrl] = useState("");
   const [istableshow, setIsTableShow] = useState(false);
-  const [tableData, setTableData] = useState({});
+  const [tableData, setTableData] = useState<element_type>({
+    db: null,
+    type: 0,
+    isPrompt: "",
+    index: 0,
+    isfilename: "",
+    isSQLQuery: "",
+    istablename: "",
+    isfilesize: 0,
+    isreturn: 0,
+  });
   const [isShowComponent, setIsShowComponent] = useState(true);
   const [exportFileName, setExportFileName] = useState("");
   const [isSQLQuery, setSQLQuery] = useState("");
@@ -65,7 +87,8 @@ const Importfile = (props: {
 
   const getBufferfromFile = async (filename: string) => {
     try {
-      let myArray: any = JSON.parse(localStorage.getItem("my-array"));
+      let temp: any = localStorage.getItem("my-array");
+      let myArray: any = JSON.parse(temp);
       let count = 0;
       myArray.map((item: any) => {
         if (item["title"] == filename) {
@@ -137,7 +160,7 @@ const Importfile = (props: {
       let conn = await props.db.connect();
       let arry = isfetchurl.split("/");
       let lastElement = arry[arry.length - 1];
-      let temp_file = null;
+      let temp_file: any = null;
 
       let table_count_query = await conn.query(
         `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${lastElement}';`
@@ -215,7 +238,7 @@ const Importfile = (props: {
     if (stringTableData != "") {
       let table_name = "pastTable";
       let conn = await props.db.connect();
-      let file: File;
+      let file: any = null;
       let table_count_query = await conn.query(
         `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}';`
       );
@@ -372,9 +395,9 @@ const Importfile = (props: {
             let data: any = {
               type: tableData["type"],
               path: {
-                table_name: tableData["istablename"],
-                file_path: tableData["isfilename"],
-                file_size: tableData["isfilesize"],
+                table_name: tableData.istablename,
+                file_path: tableData.isfilename,
+                file_size: tableData.isfilesize,
               },
             };
             props.getSelectedComponentData(data);

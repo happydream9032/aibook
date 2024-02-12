@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import ChartComponent from "../../chart";
+import { AsyncDuckDB } from 'duckdb-wasm-kit';
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
@@ -38,7 +39,7 @@ const DrawChart = (props: {
   db: any;
   chart_type: number;
 }) => {
-  const { db } = useDuckDb();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 

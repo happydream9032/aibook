@@ -26,20 +26,20 @@ const TypingComponent = (props: {
   selectComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
+  const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const { db, loading, error } = useDuckDb();
   const [isShowChildren, setIsShowChildren] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); //show dropmenu
   const [value, setValue] = useState(""); // current text of input component
-  const [elements, setElements] = useState<element_type[]>({
-    type: "",
+  const [elements, setElements] = useState<element_type[]>([{
+    type: 0,
     value: "",
     path: {
       table_name: "",
       filepath: "",
       filesize: ""
     }
-  });
+  }]);
 
   useEffect(() => {
     if (value === "/") {

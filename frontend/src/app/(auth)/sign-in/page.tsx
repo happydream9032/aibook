@@ -26,7 +26,8 @@ const SignIn = () => {
   const [isUserData, setIsUserData] = useState(null);
 
   useEffect(() => {
-    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let temp: any = localStorage.getItem("user_data");
+    let user_data = JSON.parse(temp);
     if (user_data !== null) {
       setIsUserData(user_data);
     }
@@ -49,7 +50,7 @@ const SignIn = () => {
 
   const handleGoogleLogin = async () => {
     if (session) {
-      let user = session["user"];
+      let user: any = session["user"];
       const date = new Date().toJSON();
       let data = {
         USER_ID: 0,

@@ -2,7 +2,11 @@
 const nextConfig = {
   compress: true,
   images: {
-    domains: ["img.clerk.com", "localhost","127.0.0.1"],
+    domains: ["img.clerk.com", "localhost", "127.0.0.1"],
+  },
+  reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   // webpack: (config) => {
   //     // Add a rule to handle HTML files

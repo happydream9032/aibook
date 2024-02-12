@@ -19,7 +19,8 @@ const Email_Validate = () => {
 
   const handleCodeSubmit = async () => {
     try {
-      let user = JSON.parse(localStorage.getItem("user_authenticate"));
+      let temp: any = localStorage.getItem("user_authenticate");
+      let user = JSON.parse(temp);
       let data = {
         EMAIL: user["email"],
         TOKEN: user["token"]
@@ -50,7 +51,8 @@ const Email_Validate = () => {
 
   const handleResendCode = async () => {
     try {
-      let user = JSON.parse(localStorage.getItem("user_authenticate"));
+      let temp: any = localStorage.getItem("user_authenticate")
+      let user = JSON.parse(temp);
       let data = {
         EMAIL: user["email"],
         TYPE: 1

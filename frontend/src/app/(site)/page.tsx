@@ -13,11 +13,13 @@ export default function Home() {
   const [userData, setUserData] = useState();
 
   useEffect(() => {
-    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
     if (user_data == null || Object.entries(user_data).length === 0) {
       router.push("/sign-in");
     } else {
-      const myArray = JSON.parse(localStorage.getItem("my-array"));
+      let temp: any = localStorage.getItem("my-array")
+      const myArray = JSON.parse(temp);
       if (myArray == null) {
         localStorage.setItem("my-array", JSON.stringify([]));
       }
@@ -103,7 +105,8 @@ export default function Home() {
   };
 
   const insertTableRecorder = async () => {
-    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let temp1: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp1);
     const date = new Date().toJSON();
     let path = { table_name: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };

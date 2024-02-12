@@ -110,6 +110,7 @@ const ResultTable = (props: {
       let conn = await db.connect();
       let check_table = await conn.query(props.data.isSQLQuery);
 
+      type CellInfo = /*unresolved*/ any
       let output = [...check_table].map((c) =>
         Object.keys(c).reduce(
           (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),

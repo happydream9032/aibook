@@ -15,6 +15,7 @@ import { setgpt3_5, setgpt4 } from "@/redux/features/todo-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { exportParquet } from "duckdb-wasm-kit";
 import { insertFile } from "duckdb-wasm-kit";
+import { AsyncDuckDB } from "duckdb-wasm-kit";
 // images and icons
 import HamburgerIcon from "@/assets/images/icons/Hamburger.svg";
 import GPT35Icon from "@/assets/images/icons/GPT35.svg";
@@ -65,17 +66,43 @@ const OpenDialog = (props: {
     </div>
   );
 };
+type User_Info = {
+  id: number,
+  name: string,
+  user_id: number,
+  email: string,
+  password: string,
+  status: number,
+  image: string,
+  create_at: string,
+  login_type: number,
+  ip_address: string,
+  ip_location: string,
+  token: string
+}
 
 const Navbar1 = (props: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const { db, loading, error } = useDuckDb();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
   const type = useAppSelector((state) => state.todoReducer.type);
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const userdata: any = useAppSelector((state) => state.userReducer.data);
   const dispatch = useAppDispatch();
-
-  const [userData, setUserData] = useState({})
+  const [userData, setUserData] = useState<User_Info>({
+    id: 0,
+    name: "",
+    user_id: 0,
+    email: "",
+    password: "",
+    status: 0,
+    image: "",
+    create_at: "",
+    login_type: 0,
+    ip_address: "",
+    ip_location: "",
+    token: ""
+  });
   const [hashData, setHashData] = useState(props.id);
   const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false);
   const [isDeleteNumber, setIsDeleteNumber] = useState(0);
@@ -105,15 +132,10 @@ const Navbar1 = (props: { id: string }) => {
   }, []);
 
   useEffect(() => {
-    console.log(">>>>>>>>>>>>>>", duckbook);
-    let temp = localStorage.getItem("user_data");
+    let temp: any = localStorage.getItem("user_data");
     setUserData(JSON.parse(temp));
     setIsComponentShow(true);
   }, [duckbook]);
-
-  useEffect(() => {
-    console.log(">>>>>>>>>1>>>>>", userdata);
-  }, [userdata]);
 
   const toggleTypeDropdown = () => {
     setIsOpenGPTType(!isOpenGPTType);
@@ -159,7 +181,7 @@ const Navbar1 = (props: { id: string }) => {
     if (supportsFileSystemAccess) {
       try {
         // Show the file save dialog.
-        const handle = await showSaveFilePicker({
+        const handle = await (window as any).showSaveFilePicker({
           suggestedName,
         });
         // Write the blob to the file.
@@ -257,9 +279,8 @@ const Navbar1 = (props: { id: string }) => {
               await JSON.parse(file_contents).map(
                 async (item: any, index: number) => {
                   console.log("st4", item);
-                  let myArray: any = JSON.parse(
-                    localStorage.getItem("my-array")
-                  );
+                  let temp: any = localStorage.getItem("my-array");
+                  let myArray: any = JSON.parse(temp);
                   if (myArray.length == 0) {
                     let binary = window.atob(item["content"]);
                     let len = binary.length;
@@ -350,7 +371,8 @@ const Navbar1 = (props: { id: string }) => {
   }
 
   const userLogout = () => {
-    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let temp: any = localStorage.getItem("user_data");
+    let user_data = JSON.parse(temp);
     if (user_data["login_type"] === 1) {
       localStorage.removeItem("user_data");
       localStorage.removeItem("nextauth.message");

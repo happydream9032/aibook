@@ -6,6 +6,7 @@ import MainPage from "@/components/ui/edit/MainPage";
 import { insertFile } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
 import { useDuckDb } from "duckdb-wasm-kit";
+import { AsyncDuckDB } from "duckdb-wasm-kit";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -13,14 +14,15 @@ import { useRouter } from "next/navigation";
 
 export default function Edit({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
-  const { db } = useDuckDb();
-
+  //const { db } = useDuckDb();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let temp: any = localStorage.getItem("user_data");
+    let user_data = JSON.parse(temp);
     console.log("user_data is", user_data);
     if (user_data === null) {
       router.push("/");
@@ -33,14 +35,15 @@ export default function Edit({ params }: { params: { id: string } }) {
 
   const InitDuckDB = async () => {
     try {
-      const myArray = JSON.parse(localStorage.getItem("my-array"));
+      let temp: any = localStorage.getItem("my-array");
+      const myArray = JSON.parse(temp);
       if (myArray.length === 0 || myArray == null) {
         localStorage.setItem("my-array", JSON.stringify([]));
         await getTableData();
       } else {
         await myArray.map(async (item: any, index: number) => {
           let conn = await db.connect();
-          let table_count_query = await conn.query(
+          let table_count_query: any = await conn?.query(
             `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
           );
           let table_count_array = table_count_query._offsets;

@@ -1,11 +1,16 @@
 import { useEffect, useRef } from 'react';
-import Chart from 'chart.js';
+import Chart, { ChartConfiguration, ChartType, ChartTypeRegistry } from 'chart.js/auto';
 
 const ChartComponent = (props: { data: any, titles: any, chart_type: number }) => {
-  const chartRef = useRef(null);
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstanceRef: any = useRef<Chart | null>(null);
 
   useEffect(() => {
     if (chartRef && chartRef.current) {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy(); // Destroy the existing Chart instance
+      }
+
       let chart_type = '';
       let border_color = '';
       console.log("dataset of chart is", props.data, props.chart_type);
@@ -22,7 +27,7 @@ const ChartComponent = (props: { data: any, titles: any, chart_type: number }) =
       }
 
       const myChart = new Chart(chartRef.current, {
-        type: chart_type,
+        type: chart_type as ChartType,
         data: {
           labels: Object.keys(props.data),
           datasets: [
@@ -37,30 +42,34 @@ const ChartComponent = (props: { data: any, titles: any, chart_type: number }) =
             },
           ],
         },
+        // options: {
+        //   scales: {
+        //     yAxes: {
+        //       scaleLabel: {
+        //         display: true,
+        //         labelString: props.titles.Y_Axis
+        //       }
+        //     }
+        //   },
+        // }
         options: {
-          // title: {
-          //   display: true,
-          //   position: 'top',
-          //   text: [props.titles.title, props.titles.subtitle],
-          //   fontSize: 15,
-          //   align: 'left'
-          // },
           scales: {
-            // xAxes: [{
-            //   "scaleLabel": {
-            //     display: true,
-            //     labelString: props.titles.X_Axis
-            //   }
-            // }],
-            yAxes: [{
-              scaleLabel: {
+            y: {
+              beginAtZero: true,
+              suggestedMin: 0,
+              suggestedMax: 100,
+              ticks: {
+                stepSize: 20
+              },
+              title: {
                 display: true,
-                labelString: props.titles.Y_Axis
+                text: props.titles.Y_Axis
               }
-            }]
+            },
           },
         }
       });
+      chartInstanceRef.current = myChart;
     }
   }, [props.data]);
 

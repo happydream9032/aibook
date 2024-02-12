@@ -38,7 +38,20 @@ type User_Info = {
 const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void; changeImage: (url: string) => void; }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [isUserInfo, setUserInfo] = useState<User_Info>({});
+  const [isUserInfo, setUserInfo] = useState<User_Info>({
+    id: 0,
+    name: "",
+    user_id: 0,
+    email: "",
+    password: "",
+    status: 0,
+    image: "",
+    create_at: "",
+    login_type: 0,
+    ip_address: "",
+    ip_location: "",
+    token: ""
+  });
   const [isStatue, setIsStatus] = useState(0);
   const [isTabType, setIsTabType] = useState(true);
 
@@ -135,7 +148,8 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   }
   const handleCodeSubmit = async () => {
     try {
-      let user = JSON.parse(localStorage.getItem("user_authenticate"));
+      let temp: any = localStorage.getItem("user_authenticate")
+      let user = JSON.parse(temp);
       let data = {
         EMAIL: isNewEmailAddress,
         TOKEN: user["token"]
@@ -165,7 +179,8 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   }
   const handleGetAllEmails = async () => {
     try {
-      let user_info: any = JSON.parse(localStorage.getItem("user_data"));
+      let temp: any = localStorage.getItem("user_data")
+      let user_info: any = JSON.parse(temp);
       setIsShow(false);
       let data = {
         USER_ID: user_info.id,

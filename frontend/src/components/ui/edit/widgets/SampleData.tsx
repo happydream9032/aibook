@@ -12,6 +12,18 @@ import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 import CloseButtonIcon from "@/assets/images/icons/CloseDialog.svg"
 
+interface element_type {
+  db: any,
+  type: number,
+  isPrompt: string,
+  index: number,
+  isfilename: string,
+  isSQLQuery: string,
+  isfilesize: number,
+  istablename: string,
+  isreturn: number,
+}
+
 const SampleData = (props: {
   type: any;
   index: number;
@@ -25,7 +37,17 @@ const SampleData = (props: {
   const [isSampleType, setIsSampleType] = useState(props.type);
   const [isShowComponent, setIsShowComponent] = useState(true);
   const [isfetchUrl, setIsFetchUrl] = useState("");
-  const [tableData, setTableData] = useState({});
+  const [tableData, setTableData] = useState<element_type>({
+    db: null,
+    type: 0,
+    isPrompt: "",
+    index: 0,
+    isfilename: "",
+    isSQLQuery: "",
+    istablename: "",
+    isfilesize: 0,
+    isreturn: 0,
+  });
   const [downloadFileCount, setDownloadFileCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
   const [istableshow, setIsTableShow] = useState(false);
@@ -69,7 +91,8 @@ const SampleData = (props: {
 
   const getBufferfromFile = async (filename: string) => {
     try {
-      let myArray: any = JSON.parse(localStorage.getItem("my-array"));
+      let temp: any = localStorage.getItem("my-array");
+      let myArray: any = JSON.parse(temp);
       let count = 0;
       myArray.map((item: any, index: number) => {
         if (item["title"] == filename) {
@@ -106,7 +129,7 @@ const SampleData = (props: {
       let conn = await props.db.connect();
       let arry = url.split("/");
       let lastElement = arry[arry.length - 1];
-      let temp_file = null;
+      let temp_file: any = null;
 
       console.log("step2", lastElement);
       let table_count_query = await conn.query(
