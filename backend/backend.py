@@ -256,13 +256,16 @@ def googleLogin():
         data["PASSWORD"] = encrypted_string
         addUser_result = mysqlDB.adduser(data, 1)
     
-    get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 1)
-    if len(get_user_by_emal_result1) > 0:
-        token = util.generate_user_token(get_user_by_emal_result1[0][2])
-        response_data = {"id" : get_user_by_emal_result1[0][0], "token" : token}
-        return jsonify({"code" : 200, "data" : response_data, "message" : "google user is registerd"}) 
+        get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 1)
+        if len(get_user_by_emal_result1) > 0:
+            token = util.generate_user_token(get_user_by_emal_result1[0][2])
+            response_data = {"id" : get_user_by_emal_result1[0][0], "token" : token}
+            print(response_data,"<<<<<<<<<<<")
+            return jsonify({"code" : 200, "data" : response_data, "message" : "google user is registerd"}) 
+        else:
+            return jsonify({"code" : 401, "message" : "token generate fail!"})  
     else:
-        return jsonify({"code" : 401, "message" : "token generate fail!"})  
+        return jsonify({"code" : 403, "message" : "User is already existed"})  
 
 @app.route('/changeavatar', methods=['POST', 'GET'])
 def changeAvatar():
