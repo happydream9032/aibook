@@ -19,14 +19,17 @@ app.config['CORS_HEADERS'] = 'application/json'
 CORS(app)
 
 mail= Mail(app)
-app.config["SECRET_KEY"] = 'top-secret!'  
-app.config["MAIL_SERVER"]='smtp.sendgrid.net'  
-app.config["MAIL_PORT"] = 587      
+
+app.config['MAIL_SERVER']= os.getenv('EMAIL_SERVER')
+app.config["MAIL_PORT"] = 465  
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = os.getenv('SENDER_EMAIL')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+# app.config["SECRET_KEY"] = 'top-secret!'  
 #app.config['MAIL_PASSWORD'] = 'vinpjvdslfigvoqu'  
-app.config['MAIL_USE_TLS'] = True 
-app.config['MAIL_USERNAME'] = 'apikey'
-app.config['MAIL_PASSWORD'] = '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'
-app.config['MAIL_DEFAULT_SENDER'] = 'everify@passionbytes.com' 
+# app.config['MAIL_USERNAME'] = 'apikey'
+# app.config['MAIL_PASSWORD'] = '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'
 mail = Mail(app)  
 
 @app.route('/runprompt', methods=['POST'])
@@ -126,11 +129,8 @@ def addNewUser():
         data["PASSWORD"] = hash_value
         addUser_result = mysqlDB.adduser(data, 0)
         otp = randint(100000,999999)   
-        mail_message = Message('Hello from the other side!', recipients = [data['EMAIL']])
-        mail_message.html = ('<h1>Twilio SendGrid Test Email</h1>'
-                    '<p>Congratulations! You have sent a test email with '
-                    '<b>Twilio SendGrid</b>!</p>')
-        mail_message.body = "OTP of your account is" + str(otp)
+        mail_message = Message('Hello from the databook.ai!', sender = os.getenv('SENDER_EMAIL'), recipients = [data['EMAIL']])
+        mail_message.body = "OTP of your account is -" + str(otp)
         print("sdfsd")
         mail.send(mail_message)
         get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
@@ -151,8 +151,8 @@ def resetOTPCode():
 
     otp = randint(100000,999999)   
     print(str(otp), data["EMAIL"])
-    mail_message = Message('Hello from the other side!', sender = 'everify@passionbytes.com', recipients = [data['EMAIL']])
-    mail_message.body = "OTP of your account is" + str(otp)
+    mail_message = Message('Hello from the databook.ai!', sender = os.getenv('SENDER_EMAIL'), recipients = [data['EMAIL']])
+    mail_message.body = "OTP of your account is -" + str(otp)
 
     get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
     if len(get_user_by_emal_result) > 0:
@@ -203,6 +203,14 @@ def getUsersbyEmail():
     signin_result = mysqlDB.getUsersbyEmail(data, 3)
     return signin_result
 
+@app.route('/getUsersbyID', methods=['POST'])
+def getUsersbyID():
+    data = request.json
+    print(data)
+    mysqlDB = Database()
+    signin_result = mysqlDB.getUserByID(data)
+    return signin_result
+
 @app.route('/deleteuser', methods=['POST'])
 def deleteUser():
     data = request.json
@@ -230,7 +238,8 @@ def verifyEmail():
     else: 
         validate_user_result = mysqlDB.verifyEmailAddress(decoded_data)
         if len(validate_user_result) > 0:
-            validate_success_result = mysqlDB.validateSuccess(validate_user_result[0][0])
+            for i in range(len(validate_user_result)):
+                validate_success_result = mysqlDB.validateSuccess(validate_user_result[i][0])
             return jsonify({"code" : 200, "data": validate_user_result, "message" : "generate new token"}) 
         else:
             return jsonify({"code" : 403, "message" : "token generate fail!"}) 

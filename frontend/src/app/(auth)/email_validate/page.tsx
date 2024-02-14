@@ -32,6 +32,7 @@ const Email_Validate = () => {
           console.log("update response is", response.data);
           if (response.data.code === 200) {
             toast.success("User Registered!", { position: "top-right" });
+            router.push("/sign-in")
           } else if (response.data.code === 401) {
             toast.error("Token is expired!", { position: "top-right" });
           } else if (response.data.code === 403) {

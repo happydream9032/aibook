@@ -118,6 +118,13 @@ class Database:
     myresult = self.mycursor.fetchall()
     return myresult
   
+  def getUserByID(self, data):
+    sql = "SELECT * FROM tbl_users WHERE id = %s OR user_id = %s"
+    val = (data["USER_ID"],data["USER_ID"])
+    self.mycursor.execute(sql, val)
+    myresult = self.mycursor.fetchall()
+    return myresult
+  
   def addEmailAddress(self, data):
     sql = "INSERT INTO tbl_users (user_id, email, password, status, image, created_at, login_type, ip_address, location, otp) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     val = (data["USER_ID"], data["EMAIL"], data["PASSWORD"], 0, data["IMAGE"], data["CREATE_AT"], data["LOGIN_TYPE"], data["IP_ADDRESS"], data["IP_LOCATION"], "")

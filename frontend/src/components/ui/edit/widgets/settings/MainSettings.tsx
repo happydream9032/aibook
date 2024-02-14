@@ -35,6 +35,51 @@ type User_Info = {
   token: string
 }
 
+const EmailSmallPart = (props: { email: string, verify_status: number, propsStatus: any }) => {
+  const [isShowEmailAddressPart, setIsShowEmailAddressPart] = useState(false);
+  return (<div>
+    <button className="flex w-full text-gray-500 bg-gray-100 hover:bg-gray-300 focus:ring-2 focus:ring-indigo-300 font-medium rounded-lg text-sm px-4 py-2.5 text-left inline-flex items-center"
+      type="button"
+      data-dropdown-toggle="dropdown"
+      onClick={() => { setIsShowEmailAddressPart(!isShowEmailAddressPart) }}>
+      <span className="flex justify-start">{props.email}
+        {props.verify_status == 0 ? (<span className="ml-4 bg-red-100 text-red-700 text-sm font-medium me-2 px-2.5 py-0.5 rounded">Unverified</span>) : (<span className="ml-4 bg-indigo-100 text-indigo-500 text-sm font-medium me-2 px-2.5 py-0.5 rounded">Primary</span>)}
+      </span>
+    </button>
+    {
+      isShowEmailAddressPart && (<div className="w-full ml-5 bg-white text-base z-50 list-none divide-y divide-gray-100 rounded shadow my-4" id="dropdown">
+        <ul className="py-1" aria-labelledby="dropdown">
+          <li>
+            <a href="#" className="text-sm hover:bg-gray-100 text-gray-700 block px-4 py-2">
+              {props.verify_status == 0 ? (
+                <div>
+                  <span className="ml-5block text-sm text-black">Verify email address</span>
+                  <span className="block text-sm font-medium text-gray-400 truncate">Complete verification to access all features with this email address</span>
+                  <button className="block text-sm bg-white font-medium text-indigo-500 truncate" onClick={() => { props.propsStatus(5) }}>Verify email address</button>
+                </div>
+              ) : (
+                <div>
+                  <span className="ml-5block text-sm text-black">Primary email address</span>
+                  <span className="block text-sm font-medium text-gray-400 truncate">This email address is the primary email address</span>
+                </div>)}
+              {/* <div>
+                <span className="ml-5block text-sm text-black">Verify email address</span>
+                <span className="block text-sm font-medium text-gray-400 truncate">Complete verification to access all features with this email address</span>
+                <button className="block text-sm bg-white font-medium text-indigo-500 truncate" onClick={() => { props.propsStatus(5) }}>Verify email address</button>
+              </div> */}
+              <span className="block text-sm text-black mt-3">Remove</span>
+              <span className="block text-sm font-medium text-gray-400 truncate">Delete this email address and remove it from your account</span>
+              <button className="text-sm hover:bg-gray-100 text-red-400 block py-2" onClick={() => { props.propsStatus(2) }}>
+                <span className="block text-sm">Remove email address</span>
+              </button>
+            </a>
+          </li>
+        </ul>
+      </div>)
+    }
+  </div>)
+}
+
 const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void; changeImage: (url: string) => void; }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -60,7 +105,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   const [isShowDeviceInfoPart, setIsShowDeviceInfoPart] = useState(false);
   const [isShowImageUploadComponent, setIsShowImageUploadComponent] = useState(false);
 
-  const [isUserList, setIsUserList] = useState();
+  const [isUserList, setIsUserList] = useState([]);
   const [isShow, setIsShow] = useState(false);
   const [code, setCode] = useState("");
 
@@ -82,7 +127,9 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   }, []);
 
   useEffect(() => {
-    setIsShow(true);
+    if (isUserList.length > 0) {
+      setIsShow(true);
+    }
   }, [isUserList]);
 
   const addNewEmailAddress = async () => {
@@ -120,6 +167,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   const handleResendCode = async () => {
     try {
       let data = {
+        USER_ID: isUserInfo.id,
         EMAIL: isNewEmailAddress,
         TYPE: 1
       }
@@ -129,6 +177,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
         .then((response) => {
           console.log("update response is", response.data);
           if (response.data.code === 200) {
+            setCode("");
             let json_data = {
               email: isNewEmailAddress,
               token: response.data.data
@@ -162,6 +211,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
           if (response.data.code === 200) {
             setIsNewEmailAddress("");
             setIsStatus(0);
+            setCode("");
             toast.success("User Registered!", { position: "top-right" });
           } else if (response.data.code === 401) {
             toast.error("Token is expired!", { position: "top-right" });
@@ -183,11 +233,10 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
       let user_info: any = JSON.parse(temp);
       setIsShow(false);
       let data = {
-        USER_ID: user_info.id,
-        EMAIL: user_info.email
+        USER_ID: user_info.id
       }
       console.log("get all emails of data is", data);
-      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getUsersbyEmail";
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getUsersbyID";
       await axios
         .post(update_apiUrl, data)
         .then((response) => {
@@ -294,6 +343,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
           dispatch(setUserState(user_info));
           localStorage.setItem("user_data", JSON.stringify(user_info));
           console.log(isUserInfo);
+          setIsStatus(0);
         }
       })
       .catch((error) => {
@@ -304,6 +354,7 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
   const cancelFileChange = async () => {
     setUserInfo((isUserInfo) => ({ ...isUserInfo, image: isPreImageFileName }));
     props.changeImage(isPreImageFileName);
+    setIsStatus(0);
   }
   const handleRemoveUser = async (email: string) => {
     let data = {
@@ -378,46 +429,11 @@ const MainSettingsComponent = (props: { id: string; setDialogStatus: () => void;
                       </div>
                     </button>
                     <span className="w-full mb-2 flex-col text-black font-medium border-b-2 border-gray-100">Email addresses</span>
-                    <button className="flex text-gray-500 bg-gray-100 hover:bg-gray-300 focus:ring-2 focus:ring-indigo-300 font-medium rounded-lg text-sm px-4 py-2.5 text-left inline-flex items-center"
-                      type="button"
-                      data-dropdown-toggle="dropdown"
-                      onClick={() => { setIsShowEmailAddressPart(!isShowEmailAddressPart) }}>
-                      <span className="flex justify-start">topdeveloper9032@gmail.com
-                        {/* {item[4] == 0 ? (<span className="ml-4 bg-red-100 text-red-700 text-sm font-medium me-2 px-2.5 py-0.5 rounded">Unverified</span>) : (<span className="ml-4 bg-indigo-100 text-indigo-500 text-sm font-medium me-2 px-2.5 py-0.5 rounded">Primary</span>)} */}
-                        <span className="ml-4 bg-red-100 text-red-700 text-sm font-medium me-2 px-2.5 py-0.5 rounded">Unverified</span>
-                      </span>
-                    </button>
-                    {
-                      isShowEmailAddressPart && (<div className="w-full ml-5 bg-white text-base z-50 list-none divide-y divide-gray-100 rounded shadow my-4" id="dropdown">
-                        <ul className="py-1" aria-labelledby="dropdown">
-                          <li>
-                            <a href="#" className="text-sm hover:bg-gray-100 text-gray-700 block px-4 py-2">
-                              {/* {item[4] == 0 ? (
-                                <div>
-                                  <span className="ml-5block text-sm text-black">Verify email address</span>
-                                  <span className="block text-sm font-medium text-gray-400 truncate">Complete verification to access all features with this email address</span>
-                                  <button className="block text-sm bg-white font-medium text-indigo-500 truncate" onClick={() => { setIsStatus(5) }}>Verify email address</button>
-                                </div>
-                              ) : (
-                                <div>
-                                  <span className="ml-5block text-sm text-black">Primary email address</span>
-                                  <span className="block text-sm font-medium text-gray-400 truncate">This email address is the primary email address</span>
-                                </div>)} */}
-                              <div>
-                                <span className="ml-5block text-sm text-black">Verify email address</span>
-                                <span className="block text-sm font-medium text-gray-400 truncate">Complete verification to access all features with this email address</span>
-                                <button className="block text-sm bg-white font-medium text-indigo-500 truncate" onClick={() => { setIsStatus(5) }}>Verify email address</button>
-                              </div>
-                              <span className="block text-sm text-black mt-3">Remove</span>
-                              <span className="block text-sm font-medium text-gray-400 truncate">Delete this email address and remove it from your account</span>
-                              <button className="text-sm hover:bg-gray-100 text-red-400 block py-2" onClick={() => { setIsStatus(2) }}>
-                                <span className="block text-sm">Remove email address</span>
-                              </button>
-                            </a>
-                          </li>
-                        </ul>
-                      </div>)
-                    }
+
+                    {isUserList.map((item: any, index: number) => (
+                      <div key={index} className="relative w-full mb-3 "><EmailSmallPart email={item[2]} verify_status={item[4]} propsStatus={setIsStatus} /></div>
+                    ))}
+
                     <button className="w-full bg-white rounded-md hover:bg-indigo-200 mt-3 py-3 px-3">
                       <div className="flex justify-start ">
                         <button className="font-medium text-sm text-indigo-500" onClick={() => { setIsStatus(1); }}><span className="mr-3 font-bold text-sm text-indigo-500">+</span>Add an email address</button>
