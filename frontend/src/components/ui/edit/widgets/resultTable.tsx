@@ -49,19 +49,14 @@ const ResultTable = (props: {
       type: 0,
       value: "",
       path: {
-        table_name: "",
+        tablename: "",
         filepath: "",
         filesize: "",
       },
     };
     console.log(props.data.type);
-    if (props.data.type === 11) {
-      item["value"] = "";
-    } else if (props.data.type === 12) {
-      item["value"] = "";
-    } else if (props.data.type === 13) {
-      item["value"] = "";
-    } else if (props.data.type === 2) {
+
+    if (props.data.type === 2) {
       item["value"] = props.data.isSQLQuery;
     } else if (props.data.type === 4) {
       let data = {
@@ -69,17 +64,11 @@ const ResultTable = (props: {
         query: props.data.isSQLQuery
       }
       item["value"] = JSON.stringify(data);
-    } else if (props.data.type === 141) {
-      item["value"] = "";
-    } else if (props.data.type === 142) {
-      item["value"] = "";
-    } else if (props.data.type === 143) {
-      item["value"] = "";
-    } else if (props.data.type === 144) {
+    } else {
       item["value"] = "";
     }
     item["type"] = props.data.type;
-    item["path"]["table_name"] = props.data.istablename;
+    item["path"]["tablename"] = props.data.istablename;
     item["path"]["filepath"] = props.data.isfilename;
     item["path"]["filesize"] = props.data.isfilesize;
 

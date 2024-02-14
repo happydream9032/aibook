@@ -7,7 +7,7 @@ interface element_type {
   type: number;
   value: string;
   path: {
-    table_name: string;
+    tablename: string;
     filepath: string;
     filesize: string;
   };
@@ -20,10 +20,12 @@ type Data = {
   xAxisTitle: string,
   yAxisTitle: string,
   xAxisArray: string[],
+  yAxisArray: string[],
   SourceArray: string[],
   source: number,
   barValue: number,
   xAxisValue: number,
+  yAxisValue: number,
   sort_Type: number,
   limit_Type: number
 }
@@ -96,8 +98,14 @@ const RightChartSidebar = (props: { data: any; setData: any }) => {
               <div className="flex py-2 flex-1 cursor-default item-center whitespace-nowrap w-1/4 font-medium">
                 Y-Axis
               </div>
-              <select className="bg-white border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-3/4 p-2">
-                <option selected value="row_count">Row Count</option>
+              <select className="bg-white border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-3/4 p-2"
+                value={props.data.yAxisValue}
+                onChange={(e) => { props.setData({ ...props.data, yAxisValue: parseInt(e.target.value, 10) }) }}>
+                {props.data.yAxisArray.map((item: string, index: number) => (
+                  <option className="py-2" key={index} value={index}>
+                    <span className="p-2 py-3 text-sm text-gray-700">{item}</span>
+                  </option>
+                ))}
               </select>
             </div>
           </div>

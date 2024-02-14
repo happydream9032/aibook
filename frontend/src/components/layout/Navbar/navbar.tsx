@@ -212,8 +212,8 @@ const Navbar1 = (props: { id: string }) => {
       let file_contents_array: Array<Object> = [];
       await database.map(async (item: any, index: number) => {
         let temp_path = item["path"];
-        if (temp_path["table_name"] != "") {
-          let filename = temp_path["table_name"];
+        if (temp_path["tablename"] != "") {
+          let filename = temp_path["tablename"];
           let file = await exportParquet(db, filename, filename, "zstd");
           let temp_file: any = { title: "", content: "" };
           let binary = "";
@@ -259,7 +259,7 @@ const Navbar1 = (props: { id: string }) => {
         const date = new Date().toJSON();
         let data = {
           USER_ID: jsonData["user_id"],
-          TABLE_NAME: jsonData["table_title"],
+          TABLENAME: jsonData["table_title"],
           STATUS: 0,
           DATA: JSON.stringify(jsonData["design"]),
           CREATED_AT: date,

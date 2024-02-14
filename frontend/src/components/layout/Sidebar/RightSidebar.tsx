@@ -40,7 +40,7 @@ const RightSidebar = (props: { table_data: any }) => {
               <input
                 className="shadow-sm border border-gray-200 rounded-md block font-sm px-2 py-2"
                 type="text"
-                value={props.table_data.path.table_name}
+                value={props.table_data.path.tablename}
                 onChange={(e) => {
                   e.preventDefault;
                 }}

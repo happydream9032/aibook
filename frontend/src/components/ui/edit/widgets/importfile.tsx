@@ -41,11 +41,17 @@ const Importfile = (props: {
   const [isFetchTab, setIsFetchTab] = useState(false);
   const [isPasteTableTab, setIsPasteTableTab] = useState(false);
   const [isExampleTab, setIsExampleTab] = useState(false);
-  const [isloading1, setIsLoading1] = useState(false);
-  const [isloading2, setIsLoading2] = useState(false);
-  const [isfetchurl, setIsFetchUrl] = useState("");
-  const [istableshow, setIsTableShow] = useState(false);
-  const [tableData, setTableData] = useState<element_type>({
+  const [isMinIOTab, setIsMinIoTab] = useState(false);
+  const [isLoading1, setIsLoading1] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
+  const [isLoading3, setIsLoading3] = useState(false);
+  const [isFetchurl, setIsFetchUrl] = useState("");
+  const [isBucketName, setIsBucketName] = useState("");
+  const [isFileName, setIsFileName] = useState("");
+  const [isAccessKey, setIsAccessKey] = useState("");
+  const [isSecretKey, setIsSecretKey] = useState("")
+  const [isTableShow, setIsTableShow] = useState(false);
+  const [isTableData, setTableData] = useState<element_type>({
     db: null,
     type: 0,
     isPrompt: "",
@@ -57,29 +63,28 @@ const Importfile = (props: {
     isreturn: 0,
   });
   const [isShowComponent, setIsShowComponent] = useState(true);
-  const [exportFileName, setExportFileName] = useState("");
+  const [isExportFileName, setExportFileName] = useState("");
   const [isSQLQuery, setSQLQuery] = useState("");
-  const [downloadFileCount, setDownloadFileCount] = useState(0);
+  const [isDownloadFileCount, setDownloadFileCount] = useState(0);
   const [isSQLDropMenu, setIsSQLDropMenu] = useState(false);
 
   useEffect(() => {
     let type = isComponentType;
-    if (type.type === 11 || type.type === 12 || type.type === 14) {
-      let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
+    if (type.type === 11 || type.type === 12 || type.type === 14 || type.type === 15) {
+      let isSQLQuery = `SELECT * FROM '${type.path.tablename}';`;
       let json_tabledata: any = {
         db: props.db,
         type: type.type,
         index: isComponentNumber,
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
-        istablename: type.path.table_name,
+        istablename: type.path.tablename,
         isfilesize: type.path.filesize,
         isreturn: 0,
       };
-      console.log("current db is", json_tabledata);
       setSQLQuery(isSQLQuery);
       setTableData(json_tabledata);
-      setExportFileName(type.path.table_name);
+      setExportFileName(type.path.tablename);
       setIsTableShow(true);
     }
   }, [duckbook]);
@@ -156,9 +161,9 @@ const Importfile = (props: {
   };
 
   const handleFetchUrl = async () => {
-    if (isfetchurl != "") {
+    if (isFetchurl != "") {
       let conn = await props.db.connect();
-      let arry = isfetchurl.split("/");
+      let arry = isFetchurl.split("/");
       let lastElement = arry[arry.length - 1];
       let temp_file: any = null;
 
@@ -176,7 +181,7 @@ const Importfile = (props: {
           let table_column: any = [];
           let table_row: any = [];
 
-          await fetch(isfetchurl)
+          await fetch(isFetchurl)
             .then((response) => response.text())
             .then((csvText) => {
               let rowData = [];
@@ -210,7 +215,7 @@ const Importfile = (props: {
             "zstd"
           );
           await conn.query(
-            `CREATE TABLE '${lastElement}' AS SELECT * FROM read_parquet('${isfetchurl}');`
+            `CREATE TABLE '${lastElement}' AS SELECT * FROM read_parquet('${isFetchurl}');`
           );
         }
       }
@@ -220,7 +225,7 @@ const Importfile = (props: {
         db: props.db,
         type: 12,
         index: isComponentNumber,
-        isfilename: isfetchurl,
+        isfilename: isFetchurl,
         isSQLQuery: `SELECT * FROM '${lastElement}';`,
         istablename: lastElement,
         isfilesize: temp_file.size,
@@ -228,6 +233,7 @@ const Importfile = (props: {
       };
       setSQLQuery(`SELECT * FROM '${lastElement}';`);
       setTableData(json_tabledata);
+      setExportFileName(lastElement);
       setIsTableShow(true);
       conn.close();
     }
@@ -236,11 +242,11 @@ const Importfile = (props: {
   const handlePasteTable = async (data: string) => {
     let stringTableData = data;
     if (stringTableData != "") {
-      let table_name = "pastTable";
+      let tablename = "pastTable";
       let conn = await props.db.connect();
       let file: any = null;
       let table_count_query = await conn.query(
-        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${table_name}';`
+        `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${tablename}';`
       );
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
@@ -260,22 +266,21 @@ const Importfile = (props: {
           type: "text/csv",
           lastModified: Date.now(),
         });
-        await insertFile(props.db, file, table_name);
+        await insertFile(props.db, file, tablename);
       }
 
-      await getBufferfromFile(table_name);
-
-
+      await getBufferfromFile(tablename);
       let json_tabledata: any = {
         db: props.db,
         type: 13,
         index: isComponentNumber,
         isfilename: "data" + String(table_count) + ".csv",
-        isSQLQuery: `SELECT * FROM '${table_name}';`,
-        istablename: table_name,
+        isSQLQuery: `SELECT * FROM '${tablename}';`,
+        istablename: tablename,
         isfilesize: file.size,
         isreturn: 1,
       };
+      setExportFileName(tablename);
       setTableData(json_tabledata);
       setIsTableShow(true);
       conn.close();
@@ -286,7 +291,7 @@ const Importfile = (props: {
     let conn = await props.db.connect();
     let query = isSQLQuery.replaceAll(";", "");
 
-    let temp = exportFileName.split(".");
+    let temp = isExportFileName.split(".");
     let original_filename = temp[0];
 
     if (type == 0) {
@@ -330,7 +335,7 @@ const Importfile = (props: {
       }
     } else if (type == 2) {
       let filename = original_filename + ".arrow";
-      let filename1 = original_filename + String(downloadFileCount) + ".csv";
+      let filename1 = original_filename + String(isDownloadFileCount) + ".csv";
       conn.query(`COPY (${query}) TO '${filename1}' (HEADER, DELIMITER ',');`);
       const buffer = await props.db.copyFileToBuffer(filename1);
       const blob = new Blob([buffer], { type: "text/csv" });
@@ -338,7 +343,7 @@ const Importfile = (props: {
         type: "text/csv",
         lastModified: Date.now(),
       });
-      setDownloadFileCount(downloadFileCount + 1);
+      setDownloadFileCount(isDownloadFileCount + 1);
 
       await insertFile(props.db, file, filename1);
       let new_file = await exportArrow(props.db, filename1, filename);
@@ -364,7 +369,7 @@ const Importfile = (props: {
     conn.close();
   };
 
-  const DeleteComponent = async (index: number, id: number) => {
+  const deleteComponent = async (index: number, id: number) => {
     let array = JSON.parse(duckbook["DATA"]);
     array.splice(index, 1);
 
@@ -387,30 +392,92 @@ const Importfile = (props: {
       });
   };
 
+  const getFileFromMinIO = async () => {
+    try {
+      if (isBucketName !== "" && isFileName !== "") {
+        let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/miniofiles";
+        let response = await axios.get(select_apiUrl, {
+          params: {
+            ACCESSKEY: isAccessKey,
+            SECRETKEY: isSecretKey,
+            BUCKETNAME: isBucketName,
+            FILENAME: isFileName
+          },
+          responseType: 'blob' // Ensure the response is treated as a Blob
+        });
+
+        let type = "";
+        if (String(isFileName).includes(".csv") || String(isFileName).includes(".CSV")) {
+          type = "text/csv";
+        } else if (String(isFileName).includes(".parquet") || String(isFileName).includes(".PARQUET")) {
+          type = "application/vnd.apache.parquet";
+        } else if (String(isFileName).includes(".arrow") || String(isFileName).includes(".ARROW")) {
+          type = "application/vnd.apache.arrow.file";
+        }
+        console.log("uploading file type is", type);
+        let blob = new Blob([response.data], { type: type });
+        let file = new File([blob], isFileName, {
+          type: type,
+          lastModified: Date.now(),
+        });
+
+        let conn = await props.db.connect();
+        let table_count_query = await conn.query(
+          `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${isFileName}';`
+        );
+        let table_count_array = table_count_query._offsets;
+        let table_count = table_count_array[table_count_array.length - 1];
+        if (Number(table_count) == 0) {
+          await insertFile(props.db, file, isFileName);
+        }
+
+        await getBufferfromFile(isFileName);
+        let json_tabledata: any = {
+          db: props.db,
+          type: 15,
+          index: isComponentNumber,
+          isfilename: isFileName,
+          isSQLQuery: `SELECT * FROM '${isFileName}';`,
+          istablename: isFileName,
+          isfilesize: file.size,
+          isreturn: 1,
+        };
+        setExportFileName(isFileName);
+        setSQLQuery(`SELECT * FROM '${isFileName}';`);
+        setTableData(json_tabledata);
+        setIsTableShow(true);
+        conn.close();
+      }
+
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  }
+
   return (
     <div>
       {isShowComponent && (
         <div
           onClick={() => {
             let data: any = {
-              type: tableData["type"],
+              type: isTableData["type"],
               path: {
-                table_name: tableData.istablename,
-                file_path: tableData.isfilename,
-                file_size: tableData.isfilesize,
+                tablename: isTableData.istablename,
+                file_path: isTableData.isfilename,
+                file_size: isTableData.isfilesize,
               },
             };
             props.getSelectedComponentData(data);
           }}
         >
-          {istableshow ? (
+          {isTableShow ? (
             <div className="my-6 flex flex-col overflow-revert rounded-lg border border-indigo-700 w-full right-1 shadow">
-              <ResultTable data={tableData} />
+              <ResultTable data={isTableData} />
               <div className="flex h-[30px] items-center my-2">
                 <div className="px-2 w-full flex items-center justify-between">
                   <input
                     className="flex-1 mb-2 text-sm text-gray-500 border border-transparent focus:outline-none"
-                    value={exportFileName}
+                    value={isExportFileName}
                     onChange={(e) => {
                       e.preventDefault();
                       setExportFileName(e.currentTarget.value);
@@ -491,7 +558,7 @@ const Importfile = (props: {
                                 type="button"
                                 className="w-full justify-start px-3 py-2 text-gray-400 bg-white hover:bg-gray-100 round-lg font-medium text-sm inline-flex items-center"
                                 onClick={() => {
-                                  DeleteComponent(props.index, duckbook["ID"]);
+                                  deleteComponent(props.index, duckbook["ID"]);
                                   setIsShowComponent(false);
                                 }}
                               >
@@ -526,6 +593,7 @@ const Importfile = (props: {
                         aria-selected="false"
                         tabIndex={-1}
                         onClick={() => {
+                          setIsMinIoTab(false);
                           setIsImportTab(true);
                           setIsFetchTab(false);
                           setIsPasteTableTab(false);
@@ -542,6 +610,7 @@ const Importfile = (props: {
                         aria-selected="false"
                         tabIndex={-1}
                         onClick={() => {
+                          setIsMinIoTab(false);
                           setIsImportTab(false);
                           setIsFetchTab(true);
                           setIsPasteTableTab(false);
@@ -558,6 +627,7 @@ const Importfile = (props: {
                         aria-selected="false"
                         tabIndex={-1}
                         onClick={() => {
+                          setIsMinIoTab(false);
                           setIsImportTab(false);
                           setIsFetchTab(false);
                           setIsPasteTableTab(true);
@@ -570,6 +640,23 @@ const Importfile = (props: {
                         className="py-2 hover:bg-gray-100 focus:bg-indigo-50 aria-selected:font-semibold aria-selected:text-indigo-500 outline-0"
                         type="button"
                         role="tab"
+                        id="mantine-kqnsv420g-tab-paste"
+                        aria-selected="false"
+                        tabIndex={-1}
+                        onClick={() => {
+                          setIsImportTab(false);
+                          setIsFetchTab(false);
+                          setIsPasteTableTab(false);
+                          setIsExampleTab(false);
+                          setIsMinIoTab(true);
+                        }}
+                      >
+                        <span className={`${isMinIOTab ? "text-indigo-500" : "text-gray-900"} font-semibold text-sm`}>From MinIO</span>
+                      </button>
+                      <button
+                        className="py-2 hover:bg-gray-100 focus:bg-indigo-50 aria-selected:font-semibold aria-selected:text-indigo-500 outline-0"
+                        type="button"
+                        role="tab"
                         id="mantine-kqnsv420g-tab-examples"
                         aria-selected="true"
                         tabIndex={0}
@@ -577,6 +664,7 @@ const Importfile = (props: {
                         onClick={() => {
                           setIsImportTab(false);
                           setIsFetchTab(false);
+                          setIsMinIoTab(false);
                           setIsPasteTableTab(false);
                           setIsExampleTab(true);
                         }}
@@ -588,18 +676,18 @@ const Importfile = (props: {
                     <div className="flex flex-1 justify-end">
                       {isImportTab && (
                         <div
-                          className="relative flex flex-col mantine-prepend-Tabs-panel w-full p-4 mantine-prepend-1o2nnxo gap-4"
+                          className="relative flex flex-col w-full p-4 gap-4"
                           role="tabpanel"
                           id="mantine-kqnsv420g-panel-file"
                           aria-labelledby="mantine-kqnsv420g-tab-file"
                         >
                           <button
-                            className="absolute right-4 top-4 mantine-prepend-tgtmzj"
+                            className="absolute right-4 top-4"
                             type="button"
                             tabIndex={-1}
                             title={""}
                             onClick={() => {
-                              DeleteComponent(props.index, duckbook["ID"]);
+                              deleteComponent(props.index, duckbook["ID"]);
                               setIsShowComponent(false);
                             }}
                           >
@@ -630,7 +718,7 @@ const Importfile = (props: {
                               htmlFor="file"
                               className="relative gap-2 flex flex-col items-center justify-center rounded-md text-center min-h-[156px] cursor-pointer hover:bg-gray-200"
                             >
-                              {isloading1 ? (
+                              {isLoading1 ? (
                                 <span className="rounded-lg border border-[#e0e0e0] bg-indigo-500 py-2 px-7 text-sm font-medium text-white">
                                   Loading ...
                                 </span>
@@ -660,7 +748,7 @@ const Importfile = (props: {
                             tabIndex={-1}
                             title={""}
                             onClick={() => {
-                              DeleteComponent(props.index, duckbook["ID"]);
+                              deleteComponent(props.index, duckbook["ID"]);
                               setIsShowComponent(false);
                             }}
                           >
@@ -694,10 +782,10 @@ const Importfile = (props: {
                                   setIsLoading2(true);
                                 }}
                               >
-                                {isloading2 ? "Loading" : "Load"}
+                                {isLoading2 ? "Loading" : "Load"}
                               </button>
                             </div>
-                            {isloading2 && (
+                            {isLoading2 && (
                               <span className="flex-col items-center justify-center block text-sm font-small text-indigo-400">
                                 Loading ....
                               </span>
@@ -721,7 +809,7 @@ const Importfile = (props: {
                             tabIndex={-1}
                             title={""}
                             onClick={() => {
-                              DeleteComponent(props.index, duckbook["ID"]);
+                              deleteComponent(props.index, duckbook["ID"]);
                               setIsShowComponent(false);
                             }}
                           >
@@ -819,6 +907,89 @@ const Importfile = (props: {
                               />
                               People Dataset
                             </a>
+                          </div>
+                        </div>
+                      )}
+                      {isMinIOTab && (
+                        <div
+                          className="relative flex flex-col w-full p-4 gap-4"
+                          role="tabpanel"
+                        >
+                          <button
+                            className="absolute right-4 top-4"
+                            type="button"
+                            tabIndex={-1}
+                            title={""}
+                            onClick={() => {
+                              // deleteComponent(props.index, duckbook["ID"]);
+                              setIsShowComponent(false);
+                            }}
+                          >
+                            <Image
+                              src={CloseDialogIcon}
+                              alt=""
+                              width="20"
+                              height="20"
+                            />
+                          </button>
+                          <h5 className="font-bold">From S3</h5>
+                          <div className="text-gray-400">
+                            Load a file from S3 (CSV, Parquet, or Arrow)
+                          </div>
+                          <div className="w-full flex flex-col justify-center rounded-lg min-h-[156px] p-3 gap-2 border border-[#e0e0e0]">
+                            <span className="flex justify-start w-full">Access_key :</span>
+                            <input
+                              className="flex text-sm w-full border rounded-md border-gray-600 p-1 focus:border-indigo-500"
+                              type="text"
+                              placeholder="Paste a access key of S3 bucket"
+                              onChange={(e) => {
+                                e.preventDefault();
+                                setIsAccessKey(e.currentTarget.value);
+                              }}
+                            />
+                            <span className="mt-1 flex justify-start w-full">Secret_key :</span>
+                            <input
+                              className="flex text-sm w-full border rounded-md border-gray-600 p-1 focus:border-indigo-500"
+                              type="text"
+                              placeholder="Paste a secret key of S3 bucket"
+                              onChange={(e) => {
+                                e.preventDefault();
+                                setIsSecretKey(e.currentTarget.value);
+                              }}
+                            />
+                            <span className="mt-1 flex justify-start w-full">BucketName :</span>
+                            <input
+                              className="flex text-sm w-full border rounded-md border-gray-600 p-1 focus:border-indigo-500"
+                              type="text"
+                              placeholder="Paste a name of S3 bucket"
+                              onChange={(e) => {
+                                e.preventDefault();
+                                setIsBucketName(e.currentTarget.value);
+                              }}
+                            />
+                            <span className="mt-1 flex justify-start w-full">FileName :</span>
+                            <input
+                              className="flex text-sm w-full border rounded-md border-gray-600 p-1 focus:border-indigo-500"
+                              type="text"
+                              placeholder="Paste a name of S3 filename"
+                              onChange={(e) => {
+                                e.preventDefault();
+                                setIsFileName(e.currentTarget.value);
+                              }}
+                            />
+                            <div className="flex justify-end">
+                              <button
+                                className="ml-2 mt-1 text-center bg-indigo-600 text-sm text-white py-2 px-7 rounded-md"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  getFileFromMinIO();
+                                  setIsLoading3(true);
+                                }}
+                              >
+                                {isLoading3 ? "Loading" : "Load"}
+                              </button>
+                            </div>
+
                           </div>
                         </div>
                       )}

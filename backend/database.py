@@ -25,12 +25,12 @@ class Database:
   def insertDBTableData(self, data, type):
     print(">>>>>>>>>>>>>", data, type)
     if type == True:
-      characters = str(data["TABLE_NAME"]) + str(data["USER_ID"]) + "generateTableID"
+      characters = str(data["TABLENAME"]) + str(data["USER_ID"]) + "generateTableID"
       generated_string = ''.join(random.choices(characters, k=22))
     else :
       generated_string = data["HASH"]
     sql = "INSERT INTO tbl_tables (user_id, table_name, status, data, created_at, hash) VALUES (%s, %s, %s, %s, %s, %s)"
-    val = (data["USER_ID"], data["TABLE_NAME"], data["STATUS"], data["DATA"], data["CREATED_AT"], generated_string)
+    val = (data["USER_ID"], data["TABLENAME"], data["STATUS"], data["DATA"], data["CREATED_AT"], generated_string)
     self.mycursor.execute(sql, val)
     self.mydb.commit()
     return generated_string

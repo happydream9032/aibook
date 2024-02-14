@@ -70,7 +70,7 @@ const AIPrompt = (props: {
         index: props.index,
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
-        istablename: type.path.table_name,
+        istablename: type.path.tablename,
         isreturn: 0,
       };
       setPromptValue(json_value.prompt)
@@ -119,7 +119,7 @@ const AIPrompt = (props: {
         let schema = [];
         for (let i = 0; i < Number(column_length); i++) {
           let temp_schema: any = {
-            table_name: "",
+            tablename: "",
             row: {},
             data: {},
           };
@@ -134,7 +134,7 @@ const AIPrompt = (props: {
           // make schema with table name, types of row and column data
           let temp_schema_row: any = {};
           let temp_schema_data: any = {};
-          temp_schema["table_name"] = String(temp);
+          temp_schema["tablename"] = String(temp);
           for (let i = 0; i < sub_table_schema.length; i++) {
             temp_schema_row[sub_table_schema[i]["name"]] = String(
               sub_table_schema[i]["type"]
@@ -315,7 +315,7 @@ const AIPrompt = (props: {
             let data: any = {
               type: 4,
               path: {
-                table_name: tableData["istablename"],
+                tablename: tableData["istablename"],
                 file_path: tableData["isfilename"],
               },
             };

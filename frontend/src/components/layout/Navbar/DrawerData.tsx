@@ -133,7 +133,7 @@ const DrawerData = ({ id }: { id: string }) => {
     let temp1: any = localStorage.getItem("user_data");
     let temp_userdata = JSON.parse(temp1)
     const date = new Date().toJSON();
-    let path = { table_name: "", filepath: "" };
+    let path = { tablename: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };
 
     let temp = [];
@@ -141,7 +141,7 @@ const DrawerData = ({ id }: { id: string }) => {
 
     let data = {
       USER_ID: temp_userdata.id,
-      TABLE_NAME: "NoTitle",
+      TABLENAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),
       CREATED_AT: date,

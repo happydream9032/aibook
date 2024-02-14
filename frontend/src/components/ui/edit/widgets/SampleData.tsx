@@ -70,21 +70,21 @@ const SampleData = (props: {
     if (isSampleType.path.filepath === "") {
       handleFetchUrl(fetchUrl);
     } else {
-      let isSQLQuery = `SELECT * FROM '${isSampleType.path.table_name}';`;
+      let isSQLQuery = `SELECT * FROM '${isSampleType.path.tablename}';`;
       let json_tabledata: any = {
         db: props.db,
         type: isSampleType.type,
         index: isComponentNumber,
         isfilename: isSampleType.path.filepath,
         isSQLQuery: isSQLQuery,
-        istablename: isSampleType.path.table_name,
+        istablename: isSampleType.path.tablename,
         isfilesize: isSampleType.path.filesize,
         isreturn: 0,
       };
       console.log("current db1 is", json_tabledata);
       setSQLQuery(isSQLQuery);
       setTableData(json_tabledata);
-      setExportFileName(isSampleType.path.table_name);
+      setExportFileName(isSampleType.path.tablename);
       setIsTableShow(true);
     }
   }, [isSampleType]);
@@ -332,7 +332,7 @@ const SampleData = (props: {
             let data: any = {
               type: isSampleType.type,
               path: {
-                table_name: tableData["istablename"],
+                tablename: tableData["istablename"],
                 file_path: tableData["isfilename"],
                 file_size: tableData["isfilesize"],
               },

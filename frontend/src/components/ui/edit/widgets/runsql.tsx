@@ -62,10 +62,9 @@ const RunSQL = (props: {
         index: props.index,
         isfilename: type.path.filepath,
         isSQLQuery: type.value,
-        istablename: type.path.table_name,
+        istablename: type.path.tablename,
         isreturn: 0,
       };
-      console.log("current db is", json_tabledata);
       setIsSQLQuery(type.value);
       setTableData(json_tabledata);
       setIsLoading(true);
@@ -206,7 +205,7 @@ const RunSQL = (props: {
             let data: any = {
               type: tableData["type"],
               path: {
-                table_name: "runquery",
+                tablename: "runquery",
                 file_path: "runquery",
               },
             };

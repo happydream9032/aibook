@@ -13,7 +13,7 @@ interface element_type {
   type: number;
   value: string;
   path: {
-    table_name: string;
+    tablename: string;
     filepath: string;
     filesize: string;
   };
@@ -26,10 +26,12 @@ type Data = {
   xAxisTitle: string,
   yAxisTitle: string,
   xAxisArray: string[],
+  yAxisArray: string[],
   SourceArray: string[],
   source: number,
   barValue: number,
   xAxisValue: number,
+  yAxisValue: number,
   sort_Type: number,
   limit_Type: number
 }
@@ -48,16 +50,18 @@ const DrawChart = (props: {
   const [isChartTitles, setIsChartTitles] = useState();
 
   const [chartData, setChartData] = useState<Data>({
-    schema: [{ type: 0, value: "", path: { table_name: "", filepath: "", filesize: "" } }],
+    schema: [{ type: 0, value: "", path: { tablename: "", filepath: "", filesize: "" } }],
     title: "",
     subTitle: "",
     xAxisTitle: "",
     yAxisTitle: "Row Count",
     xAxisArray: [],
+    yAxisArray: ["Row Count"],
     SourceArray: [],
     source: 0,
     barValue: Number(props.chart_type),
     xAxisValue: 1,
+    yAxisValue: 0,
     sort_Type: 0,
     limit_Type: 0
   });
@@ -73,8 +77,8 @@ const DrawChart = (props: {
         if (item == null) {
           array.splice(index, 1);
         } else {
-          if (item.path.table_name !== "") {
-            source_array.push(item.path.table_name);
+          if (item.path.tablename !== "") {
+            source_array.push(item.path.tablename);
           } else {
             array.splice(index, 1);
           }
@@ -94,14 +98,16 @@ const DrawChart = (props: {
 
   useEffect(() => {
     InitialDataSet(chartData.schema, chartData.source);
-  }, [chartData.yAxisTitle, chartData.source, chartData.barValue, chartData.sort_Type, chartData.limit_Type, chartData.xAxisValue]);
+  }, [chartData.yAxisTitle, chartData.source, chartData.barValue, chartData.sort_Type, chartData.limit_Type, chartData.yAxisValue, chartData.xAxisValue]);
 
   const InitialDataSet = async (array: any, index: number) => {
     let conn = await props.db.connect();
     let get_query = "";
     console.log("data.schema[Tindex] is", array[index], array[index].path, chartData.xAxisValue);
     if (array[index].type !== 2 && array[index].type !== 3 && array[index].type !== 4) {
-      get_query = `SELECT * FROM '${array[index].path.table_name}';`;
+      if (array[index].path.tablename !== "") {
+        get_query = `SELECT * FROM '${array[index].path.tablename}';`;
+      }
     } else {
       if (array[index].value !== "") {
         if (array[index].type === 2) {
@@ -114,28 +120,86 @@ const DrawChart = (props: {
     }
 
     let get_table_data = await conn.query(get_query);
-    let output = [...get_table_data].map((c) =>
+    type CellInfo = /*unresolved*/ any
+    let output: any = [...get_table_data].map((c) =>
       Object.keys(c).reduce(
         (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),
-        {}
+        {} as CellInfo
       )
     );
-    // get array of row items
-    let header_titles = Object.keys(output[0]);
-    let remove_duplicated_array = removeDuplicates(header_titles);
+    if (output.length > 0) {
+      // get array of row items
+      let header_titles = Object.keys(output[0]);
+      let new_header_titles = Object.keys(output[0]);
+      let remove_duplicated_array = removeDuplicates(header_titles);
 
-    // get column data with row item
-    let body_items: any = [];
-    output.map((item: any) => {
-      Object.values(item).map((value: any, index: number) => {
-        if (index === chartData.xAxisValue) {
-          body_items.push(value);
+      // get column data with row item
+      let temp_dimention_array: any = [[]];
+      output.map((item: any, index1: number) => {
+        if (index1 > 0) {
+          let temp_one_array: any = [];
+          Object.values(item).map((value: any, index: number) => {
+            temp_one_array.push(value);
+            if (isNaN(parseInt(value, 10))) {
+              new_header_titles[index] = "";
+            }
+          })
+          temp_dimention_array.push(temp_one_array);
         }
-      })
-    });
+      });
+      console.log("total array is", temp_dimention_array);
+      let yAixs_array = new_header_titles.filter((str) => str !== "");
+      yAixs_array.unshift("Row Count");
 
-    let dataset = countItems(body_items);
-    let string_dataset = convertStringKeyJson(dataset)
+      //build dataset for drawing chart
+      if (chartData.yAxisValue === 0) {
+        let columnItems = [];
+        for (let row = 0; row < temp_dimention_array.length; row++) {
+          columnItems.push(temp_dimention_array[row][chartData.xAxisValue]);
+        }
+        let dataset = countItems(columnItems);
+        let string_dataset = convertStringKeyJson(dataset);
+        LimitArray(string_dataset);
+      } else {
+        let columnXItems: any = [];
+        let columnYItems: any = [];
+        let string_dataset: any = {};
+        for (let row = 0; row < temp_dimention_array.length; row++) {
+          columnXItems.push(temp_dimention_array[row][chartData.xAxisValue]);
+        }
+
+        let y_title = yAixs_array[chartData.yAxisValue];
+        let index = new_header_titles.indexOf(y_title);
+
+        for (let row = 0; row < temp_dimention_array.length; row++) {
+          columnYItems.push(parseFloat(temp_dimention_array[row][index]));
+        }
+
+        for (let row = 0; row < columnXItems.length; row++) {
+          string_dataset[String(columnXItems[row])] = columnYItems[row];
+        }
+        LimitArray(string_dataset);
+      }
+
+      // remove same data of array
+      let chart_titles: any = {
+        title: chartData.title,
+        subtitle: chartData.subTitle,
+        Y_Axis: chartData.yAxisTitle,
+        X_Axis: remove_duplicated_array[chartData.xAxisValue]
+      }
+
+      setChartData((chartData) => ({ ...chartData, yAxisTitle: yAixs_array[chartData.yAxisValue] }));
+      setChartData((chartData) => ({ ...chartData, yAxisArray: yAixs_array }));
+      setChartData((chartData) => ({ ...chartData, xAxisTitle: remove_duplicated_array[chartData.xAxisValue] }));
+      setChartData((chartData) => ({ ...chartData, xAxisArray: remove_duplicated_array }));
+      setIsChartTitles(chart_titles);
+      setIsShowComponent(true);
+      setComponetType();
+    }
+  }
+
+  const LimitArray = (string_dataset: any) => {
     if (chartData.limit_Type === 0) {
       SortArray(extractJson_TopNumber(string_dataset, 10));
     } else if (chartData.limit_Type === 1) {
@@ -145,20 +209,7 @@ const DrawChart = (props: {
     } else if (chartData.limit_Type === 3) {
       SortArray(string_dataset);
     }
-    // remove same data of array
-    let chart_titles: any = {
-      title: chartData.title,
-      subtitle: chartData.subTitle,
-      Y_Axis: chartData.yAxisTitle,
-      X_Axis: remove_duplicated_array[chartData.xAxisValue]
-    }
-    setChartData((chartData) => ({ ...chartData, xAxisTitle: remove_duplicated_array[chartData.xAxisValue] }));
-    setChartData((chartData) => ({ ...chartData, xAxisArray: remove_duplicated_array }));
-    setIsChartTitles(chart_titles);
-    setIsShowComponent(true);
-    setComponetType();
   }
-
   const SortArray = (limited_dataset: any) => {
     if (chartData.sort_Type === 0) {  //sort by AZ
       setIsChartData(sortbyKey(limited_dataset));
@@ -204,14 +255,14 @@ const DrawChart = (props: {
           type: 3,
           value: "",
           path: {
-            table_name: "",
+            tablename: "",
             filepath: "",
             filesize: "",
           },
         };
         item.value = JSON.stringify(chartData);
         array[props.index] = item;
-        dispatch(setChangeDuckBookData(JSON.stringify(array)));
+        //dispatch(setChangeDuckBookData(JSON.stringify(array)));
         saveDuckDBData(JSON.stringify(array));
       })
       .catch((error) => {

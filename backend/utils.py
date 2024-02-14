@@ -8,7 +8,7 @@ load_dotenv()
 
 class Utils:
   def __init__(self):
-    self.secret_key = os.getenv('SECRET_KEY')
+    self.secret_key = os.getenv('ENCRYPT_KEY')
     self.private_key = os.getenv('PRIVATE_KEY')
     self.public_key = os.getenv('PUBLIC_KEY')
 
@@ -33,7 +33,7 @@ class Utils:
       data = jwt.decode(token, self.secret_key, algorithms=['HS256'])
       print("======================", data)
       return data['public_id']
-    except jwt.ExpiredSignature:
-      return "401"
+    # except jwt.ExpiredSignature:
+    #   return "401"
     except:
       return "403"

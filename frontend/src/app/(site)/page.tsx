@@ -108,14 +108,14 @@ export default function Home() {
     let temp1: any = localStorage.getItem("user_data")
     let user_data = JSON.parse(temp1);
     const date = new Date().toJSON();
-    let path = { table_name: "", filepath: "" };
+    let path = { tablename: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };
 
     let temp = [];
     temp.push(componet);
     let data = {
       USER_ID: user_data.id,
-      TABLE_NAME: "NoTitle",
+      TABLENAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),
       CREATED_AT: date,

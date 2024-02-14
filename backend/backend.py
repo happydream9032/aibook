@@ -1,14 +1,16 @@
 import os
 import hashlib
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from pymysql import NULL
 from ask import QuackingDuck
 from utils import Utils
+from miniodemo import MinIODemo
 from database import Database
 from flask_mail import Mail, Message
 from random import * 
 from dotenv import load_dotenv
+from gevent.pywsgi import WSGIServer
 
 load_dotenv()
 
@@ -88,7 +90,6 @@ def changeDBName():
 @app.route('/changedbdata', methods=['POST'])
 def changeDBData():
     data = request.json
-    print(data)
     mysqlDB = Database()
     change_dbdata_result = mysqlDB.changeDBDataByID(data)
     return change_dbdata_result
@@ -187,7 +188,7 @@ def changePassword():
     get_allusers_by_id = mysqlDB.getAllUsersById(0, data["ID"])
     print(get_allusers_by_id[0][3], encrypted_string)
 
-    if get_allusers_by_id[0][3] == "" or get_allusers_by_id[0][3] == encrypted_string:
+    if get_allusers_by_id[0][3] == encrypted_string:
         encrypted_string1 = hashlib.md5(data["NEW_PASSWORD"].encode()).hexdigest()
         changepwd_result = mysqlDB.changeUserPassword(encrypted_string1, data["ID"])
         return jsonify({"code" : 200, "data" : encrypted_string1,"message" : "Changing password is successful!"})
@@ -213,6 +214,7 @@ def deleteUser():
         return jsonify({"code" : 200, "message" : "generate new token"}) 
     else:
         return jsonify({"code" : 401, "message" : "Can't find user data"})
+    
 @app.route('/verify', methods=['POST'])
 def verifyEmail():
     data = request.json
@@ -223,8 +225,8 @@ def verifyEmail():
     decoded_data = util.validate_token(data["TOKEN"])
     if decoded_data == "403":
         return jsonify({"code" : 403, "message" : "token generate fail!"}) 
-    elif decoded_data == "401":
-        return jsonify({"code" : 401, "message" : "token is expired"})
+    # elif decoded_data == "401":
+    #     return jsonify({"code" : 401, "message" : "token is expired"})
     else: 
         validate_user_result = mysqlDB.verifyEmailAddress(decoded_data)
         if len(validate_user_result) > 0:
@@ -283,5 +285,39 @@ def upload_file():
 def get_uploaded_file(filename):
     return send_from_directory('uploads', filename)
 
+@app.route('/uploadstomonio/<bucketname>', methods=['POST'])
+def upload_file_MinIO(bucketname):
+    if 'file' not in request.files:
+        return 'No file part in the request', 400
+    file = request.files['file']
+
+    if file.filename == '':
+        return 'No selected image file', 400
+    if file:
+        file.save('uploads/' + file.filename)
+        minio_instance = MinIODemo(bucketname)
+        file_name = minio_instance.upload_file(file.filename)
+        print("file_name is", file_name)
+        return jsonify({"code" : 200, "message" : "File uploaded successfully"}) 
+    else:
+        return jsonify({"code" : 401, "message" : "Can't upload image"})
+    
+@app.route('/miniofiles', methods=['GET'])
+def get_minio_file():
+    buckectname = request.args.get('BUCKETNAME')
+    filename = request.args.get('FILENAME')
+    secretkey = request.args.get('SECRETKEY')
+    accesskey = request.args.get('ACCESSKEY')
+
+    minio_instance = MinIODemo(accesskey, secretkey, buckectname)
+    file_name = minio_instance.get_file(filename)
+    print("file_name is", file_name)
+    return send_file('results/' + file_name, as_attachment=True)
+    #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+    # from waitress import serve
+    # serve(app, host='0.0.0.0', port=5000) 
+    # http_server = WSGIServer(("127.0.0.1", 5000), app)
+    # http_server.serve_forever()

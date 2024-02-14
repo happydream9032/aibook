@@ -15,7 +15,7 @@ interface element_type {
   type: number;
   value: string;
   path: {
-    table_name: string;
+    tablename: string;
     filepath: string;
     filesize: string;
   };
@@ -35,7 +35,7 @@ const TypingComponent = (props: {
     type: 0,
     value: "",
     path: {
-      table_name: "",
+      tablename: "",
       filepath: "",
       filesize: ""
     }
@@ -73,7 +73,7 @@ const TypingComponent = (props: {
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
     const array = [...elements];
-    let path = { table_name: "", filepath: "", filesize: "" };
+    let path = { tablename: "", filepath: "", filesize: "" };
     let componet = { type: type, value: "", path: path };
     array.push(componet);
     console.log("array is ===", array);
@@ -95,7 +95,7 @@ const TypingComponent = (props: {
     switch (event.code) {
       case "Enter":
         const array = [...elements];
-        let path = { table_name: "", filepath: "", filesize: "" };
+        let path = { tablename: "", filepath: "", filesize: "" };
         const object = { type: 0, value: value, path: path };
         array.push(object);
         setElements(array);
@@ -152,6 +152,15 @@ const TypingComponent = (props: {
               handleSeletedComponentData(data)
             }
           />
+        ) : item.type === 15 ? (
+          <Importfile
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
         ) : item.type === 2 ? (
           <RunSQL
             type={item}
@@ -161,12 +170,26 @@ const TypingComponent = (props: {
               handleSeletedComponentData(data)
             }
           />
-        ) : item.type === 3 ? (
+        ) : item.type === 131 ? (
           <DrawChart
             type={item}
             index={index}
             db={db}
             chart_type={0}
+          />
+        ) : item.type === 132 ? (
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            chart_type={1}
+          />
+        ) : item.type === 133 ? (
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            chart_type={2}
           />
         ) : item.type === 4 ? (
           <AIPrompt
