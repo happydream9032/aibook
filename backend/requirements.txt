@@ -6,6 +6,7 @@ flask_cors
 python-dotenv
 flask-mysqldb
 jwt
+pyjwt
 cryptography
 flask_mail
 minio
