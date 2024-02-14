@@ -7,12 +7,23 @@ import { exportArrow } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-
+import { AsyncDuckDB } from "duckdb-wasm-kit";
 import GPT4Icon from "@/assets/images/icons/GPT4.svg";
 import ContentCopy from "@/assets/images/icons/ContentCopy.svg";
 import RunSQLQueryIcon from '@/assets/images/icons/RunSQLQueryIcon.svg';
 import MoreViewIcon from "@/assets/images/icons/MoreView.svg";
 import NewIcon1 from "@/assets/images/icons/NewIcon1.svg";
+
+interface element_type {
+  db: any,
+  type: number,
+  isPrompt: string,
+  index: number,
+  isfilename: string,
+  isSQLQuery: string,
+  istablename: string,
+  isreturn: number,
+}
 
 const AIPrompt = (props: {
   type: any;
@@ -21,7 +32,7 @@ const AIPrompt = (props: {
   getSelectedComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
-  const { db } = useDuckDb();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
   const type = useAppSelector((state) => state.todoReducer.type);
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 
@@ -29,7 +40,16 @@ const AIPrompt = (props: {
   const [promptvalue, setPromptValue] = useState("");
   const [ispromptfinish, setIsPromptFinish] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [tableData, setTableData] = useState({});
+  const [tableData, setTableData] = useState<element_type>({
+    db: null,
+    type: 0,
+    isPrompt: "",
+    index: 0,
+    isfilename: "",
+    isSQLQuery: "",
+    istablename: "",
+    isreturn: 0,
+  });
   const [isFailuer, setIsFailure] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // statue get query
   const [isRunLoading, setIsRunLoading] = useState(false); // status get result of run query
@@ -41,20 +61,22 @@ const AIPrompt = (props: {
   useEffect(() => {
     let type = props.type;
     if (type.type === 4 && type.value != "") {
-      let isSQLQuery = `SELECT * FROM '${type.path.table_name}';`;
+      let json_value = JSON.parse(type.value);
+      let isSQLQuery = json_value.query;
       let json_tabledata: any = {
         db: props.db,
         type: type.type,
-        isPrompt: type.value,
+        isPrompt: json_value.prompt,
         index: props.index,
         isfilename: type.path.filepath,
         isSQLQuery: isSQLQuery,
-        istablename: type.path.table_name,
+        istablename: type.path.tablename,
         isreturn: 0,
       };
+      setPromptValue(json_value.prompt)
       setTableData(json_tabledata);
-      setIsSQLQuery(type.value);
-      handleRunQuery(type.value, true);
+      setIsSQLQuery(json_value.query);
+      handleRunQuery(json_value.query, true);
       setIsLoading(true);
     }
   }, [props]);
@@ -88,7 +110,7 @@ const AIPrompt = (props: {
     try {
       let conn = await db.connect();
       if (promptvalue != "") {
-        let schema_tables = await conn.query(
+        let schema_tables: any = await conn.query(
           "SELECT table_name FROM information_schema.tables;"
         );
 
@@ -97,14 +119,14 @@ const AIPrompt = (props: {
         let schema = [];
         for (let i = 0; i < Number(column_length); i++) {
           let temp_schema: any = {
-            table_name: "",
+            tablename: "",
             row: {},
             data: {},
           };
 
           let temp = schema_tables.get(i).toArray(); // get table names
           //get first row of all tables.
-          let sub_table = await conn.query(
+          let sub_table: any = await conn.query(
             `SELECT * FROM '${String(temp)}' LIMIT 1;`
           );
           let sub_table_schema = sub_table.schema.fields;
@@ -112,7 +134,7 @@ const AIPrompt = (props: {
           // make schema with table name, types of row and column data
           let temp_schema_row: any = {};
           let temp_schema_data: any = {};
-          temp_schema["table_name"] = String(temp);
+          temp_schema["tablename"] = String(temp);
           for (let i = 0; i < sub_table_schema.length; i++) {
             temp_schema_row[sub_table_schema[i]["name"]] = String(
               sub_table_schema[i]["type"]
@@ -129,7 +151,7 @@ const AIPrompt = (props: {
         const data = {
           schema: schema.toString(),
           prompt: promptvalue,
-          model: type,
+          model: type
         };
         const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/runprompt";
         await axios
@@ -293,7 +315,7 @@ const AIPrompt = (props: {
             let data: any = {
               type: 4,
               path: {
-                table_name: tableData["istablename"],
+                tablename: tableData["istablename"],
                 file_path: tableData["isfilename"],
               },
             };
@@ -384,7 +406,6 @@ const AIPrompt = (props: {
                             type="button"
                             title={""}
                             onClick={() => {
-                              setTableData({});
                               handleRunQuery("", false);
                             }}
                           >

@@ -53,11 +53,11 @@ const OpenDialog = (props: {
   );
 };
 
-const DrawerData = ({ id }) => {
+const DrawerData = ({ id }: { id: string }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const duckbooklist = useAppSelector((state) => state.navbarlistReducer.data);
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
+  const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
 
   const [isListData, setisListData] = useState([]);
   const [isDeleteRecoder, setIsDeleteRecoder] = useState(false);
@@ -130,16 +130,18 @@ const DrawerData = ({ id }) => {
   };
 
   const insertTableRecorder = async () => {
+    let temp1: any = localStorage.getItem("user_data");
+    let temp_userdata = JSON.parse(temp1)
     const date = new Date().toJSON();
-    let path = { table_name: "", filepath: "" };
+    let path = { tablename: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };
 
     let temp = [];
     temp.push(componet);
 
     let data = {
-      USER_ID: "23443464",
-      TABLE_NAME: "NoTitle",
+      USER_ID: temp_userdata.id,
+      TABLENAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),
       CREATED_AT: date,

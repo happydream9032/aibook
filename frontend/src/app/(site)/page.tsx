@@ -1,7 +1,8 @@
 "use client";
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { setUserState } from "@/redux/features/user-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
@@ -9,15 +10,50 @@ import { setDuckBookState } from "@/redux/features/navbar-slice";
 export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [userData, setUserData] = useState();
 
   useEffect(() => {
-    const myArray = JSON.parse(localStorage.getItem("my-array"));
-    if (myArray == null) {
-      localStorage.setItem("my-array", JSON.stringify([]));
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
+    if (user_data == null || Object.entries(user_data).length === 0) {
+      router.push("/sign-in");
+    } else {
+      let temp: any = localStorage.getItem("my-array")
+      const myArray = JSON.parse(temp);
+      if (myArray == null) {
+        localStorage.setItem("my-array", JSON.stringify([]));
+      }
+      verify_Email(user_data)
     }
-    getTableData();
   }, []);
 
+  const verify_Email = async (user_data: any) => {
+    try {
+      let data = {
+        EMAIL: user_data.email,
+        TOKEN: user_data.token
+      }
+      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/verify";
+      await axios
+        .post(update_apiUrl, data)
+        .then((response) => {
+          console.log("update response is", response.data);
+          if (response.data.code === 200) {
+            setUserData(user_data);
+            dispatch(setUserState(user_data));
+            getTableData();
+          } else {
+            localStorage.removeItem("user_data");
+            router.push("/sign-in");
+          }
+        })
+        .catch((error) => {
+          console.error("Error19:", error.message);
+        });
+    } catch (err: any) {
+      console.error(err);
+    }
+  }
   const changeTableData = async (response: any) => {
     let response_data = response;
     let final_data: any = [];
@@ -47,9 +83,14 @@ export default function Home() {
   };
 
   const getTableData = async () => {
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
+    let data = {
+      ID: user_data.id
+    }
     let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getdbtable";
     await axios
-      .post(select_apiUrl)
+      .post(select_apiUrl, data)
       .then((response) => {
         if (response.data.length == 0) {
           insertTableRecorder();
@@ -64,15 +105,17 @@ export default function Home() {
   };
 
   const insertTableRecorder = async () => {
+    let temp1: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp1);
     const date = new Date().toJSON();
-    let path = { table_name: "", filepath: "" };
+    let path = { tablename: "", filepath: "" };
     let componet = { type: 0, value: "", path: path };
 
     let temp = [];
     temp.push(componet);
     let data = {
-      USER_ID: "23443464",
-      TABLE_NAME: "NoTitle",
+      USER_ID: user_data.id,
+      TABLENAME: "NoTitle",
       STATUS: 0,
       DATA: JSON.stringify(temp),
       CREATED_AT: date,

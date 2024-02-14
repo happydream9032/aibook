@@ -6,35 +6,44 @@ import MainPage from "@/components/ui/edit/MainPage";
 import { insertFile } from "duckdb-wasm-kit";
 import { useState, useEffect } from "react";
 import { useDuckDb } from "duckdb-wasm-kit";
+import { AsyncDuckDB } from "duckdb-wasm-kit";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
 
-export default function Home({ params }: { params: { id: string } }) {
+export default function Edit({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
-  const { db } = useDuckDb();
-
+  //const { db } = useDuckDb();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (db != null) {
-      InitDuckDB();
+    let temp: any = localStorage.getItem("user_data");
+    let user_data = JSON.parse(temp);
+    console.log("user_data is", user_data);
+    if (user_data === null) {
+      router.push("/");
+    } else {
+      if (db != null) {
+        InitDuckDB();
+      }
     }
   }, [db]);
 
   const InitDuckDB = async () => {
     try {
-      const myArray = JSON.parse(localStorage.getItem("my-array"));
-      if (myArray == null) {
+      let temp: any = localStorage.getItem("my-array");
+      const myArray = JSON.parse(temp);
+      if (myArray.length === 0 || myArray == null) {
         localStorage.setItem("my-array", JSON.stringify([]));
+        await getTableData();
       } else {
         await myArray.map(async (item: any, index: number) => {
           let conn = await db.connect();
-
-          let table_count_query = await conn.query(
+          let table_count_query: any = await conn?.query(
             `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
           );
           let table_count_array = table_count_query._offsets;
@@ -47,17 +56,18 @@ export default function Home({ params }: { params: { id: string } }) {
             for (let i = 0; i < len; i++) {
               bytes[i] = binary.charCodeAt(i);
             }
-
+            console.log("initial file is", item["title"])
             const blob = new Blob([bytes]);
             const file = new File([blob], String(index) + ".parquet", {
               type: "application/vnd.apache.parquet",
               lastModified: Date.now(),
             });
             await insertFile(db, file, item["title"]);
+            await getTableData();
           }
         });
       }
-      await getTableData();
+
     } catch (error) {
       console.log("222", error);
     }
@@ -71,7 +81,7 @@ export default function Home({ params }: { params: { id: string } }) {
     await axios
       .post(select_apiUrl, data)
       .then((response) => {
-        console.log("response is", response.data);
+        console.log("response1 is", response.data);
 
         let final_data: any = [];
         response.data.map((item: any) => {
@@ -93,6 +103,7 @@ export default function Home({ params }: { params: { id: string } }) {
           temp_data["HASH"] = String(item[6]);
           final_data.push(temp_data);
         });
+        console.log("store duckbook is", final_data[0])
         dispatch(setDuckBookState(final_data[0]));
       })
       .catch((error) => {
@@ -129,9 +140,14 @@ export default function Home({ params }: { params: { id: string } }) {
   };
 
   const getTableData = async () => {
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
+    let data = {
+      ID: user_data.id
+    }
     let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getdbtable";
     await axios
-      .post(select_apiUrl)
+      .post(select_apiUrl, data)
       .then((response) => {
         console.log("response is", response.data);
         if (response.data.length == 0) {

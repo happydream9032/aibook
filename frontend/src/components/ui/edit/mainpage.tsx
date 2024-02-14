@@ -4,6 +4,7 @@ import axios from "axios";
 
 import TypingComponent from "./widgets/TypingComponent";
 import RightSidebar from "@/components/layout/Sidebar/RightSidebar";
+import RightChartSidebar from "@/components/layout/Sidebar/RightChartSidebar";
 
 import { useRouter } from "next/navigation";
 import { setChangeDuckBookName } from "@/redux/features/navbar-slice";
@@ -16,6 +17,7 @@ const MainPage = (props: { id: string }) => {
   const dispatch = useAppDispatch();
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const [dbname, setDbName] = useState("");
+  const [isChartData, setIsChartData] = useState(null);
   const [isComponetData, setIsComponetData] = useState({});
   const [isModalShow, setIsModalShow] = useState(false);
 
@@ -70,9 +72,14 @@ const MainPage = (props: { id: string }) => {
   };
 
   const getTableData = async () => {
+    let temp: any = localStorage.getItem("user_data")
+    let user_data = JSON.parse(temp);
+    let data = {
+      ID: user_data.id
+    }
     let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getdbtable";
     await axios
-      .post(select_apiUrl)
+      .post(select_apiUrl, data)
       .then((response) => {
         console.log("response1 is", response.data);
         changeTableData(response.data);

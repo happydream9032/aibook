@@ -4,8 +4,10 @@ import RunSQL from "./RunSQL";
 import AIPrompt from "./AIPrompt";
 import SampleData from "./SampleData";
 import DropdownModal from "./DropdownModal";
+import DrawChart from "./DrawChart";
 import { useDuckDb } from "duckdb-wasm-kit";
 
+import RightChartSidebar from "@/components/layout/Sidebar/RightChartSidebar";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
@@ -13,7 +15,7 @@ interface element_type {
   type: number;
   value: string;
   path: {
-    table_name: string;
+    tablename: string;
     filepath: string;
     filesize: string;
   };
@@ -24,13 +26,20 @@ const TypingComponent = (props: {
   selectComponentData: (data: any) => void;
 }) => {
   const dispatch = useAppDispatch();
-  const duckbook = useAppSelector((state) => state.navbarReducer.data);
+  const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const { db, loading, error } = useDuckDb();
-  const element_data = JSON.parse(duckbook["DATA"]);
   const [isShowChildren, setIsShowChildren] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); //show dropmenu
   const [value, setValue] = useState(""); // current text of input component
-  const [elements, setElements] = useState<element_type[]>(element_data);
+  const [elements, setElements] = useState<element_type[]>([{
+    type: 0,
+    value: "",
+    path: {
+      tablename: "",
+      filepath: "",
+      filesize: ""
+    }
+  }]);
 
   useEffect(() => {
     if (value === "/") {
@@ -47,12 +56,15 @@ const TypingComponent = (props: {
   }, [db]);
 
   useEffect(() => {
-    elements.map((item, index) => {
+    console.log("111", duckbook)
+    const element_data = JSON.parse(duckbook["DATA"]);
+    element_data.map((item: any, index: number) => {
       if (item == null) {
-        elements.splice(index, 1);
+        element_data.splice(index, 1);
       }
     });
-  }, []);
+    setElements(element_data);
+  }, [duckbook]);
 
   const closeModal = () => {
     setIsDropdownOpen(false);
@@ -61,7 +73,7 @@ const TypingComponent = (props: {
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
     const array = [...elements];
-    let path = { table_name: "", filepath: "", filesize: "" };
+    let path = { tablename: "", filepath: "", filesize: "" };
     let componet = { type: type, value: "", path: path };
     array.push(componet);
     console.log("array is ===", array);
@@ -83,7 +95,7 @@ const TypingComponent = (props: {
     switch (event.code) {
       case "Enter":
         const array = [...elements];
-        let path = { table_name: "", filepath: "", filesize: "" };
+        let path = { tablename: "", filepath: "", filesize: "" };
         const object = { type: 0, value: value, path: path };
         array.push(object);
         setElements(array);
@@ -140,6 +152,15 @@ const TypingComponent = (props: {
               handleSeletedComponentData(data)
             }
           />
+        ) : item.type === 15 ? (
+          <Importfile
+            type={item}
+            index={index}
+            db={db}
+            getSelectedComponentData={(data: any) =>
+              handleSeletedComponentData(data)
+            }
+          />
         ) : item.type === 2 ? (
           <RunSQL
             type={item}
@@ -149,8 +170,27 @@ const TypingComponent = (props: {
               handleSeletedComponentData(data)
             }
           />
-        ) : item.type === 3 ? (
-          <div></div>
+        ) : item.type === 131 ? (
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            chart_type={0}
+          />
+        ) : item.type === 132 ? (
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            chart_type={1}
+          />
+        ) : item.type === 133 ? (
+          <DrawChart
+            type={item}
+            index={index}
+            db={db}
+            chart_type={2}
+          />
         ) : item.type === 4 ? (
           <AIPrompt
             type={item}
@@ -203,11 +243,11 @@ const TypingComponent = (props: {
     ));
   };
   return (
-    <div>
+    <div >
       <div>
         {isShowChildren && contents()}
         <input
-          className="text-lg py-4 w-full border border-transparent focus:outline-none"
+          className="text-lg py-4 w-full border-none"
           type="text"
           value={value}
           placeholder="Type '/' to show the dropdown"

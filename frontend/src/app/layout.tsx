@@ -5,7 +5,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 //import SupabaseProvider from "@/providers/SupabaseProvider";
 import UserProvider from "@/providers/UserProvider";
 import { Providers } from "@/redux/provider";
-// import { SessionProvider } from "next-auth/react";
+import AuthProvider from "./context/Authprovider";
 
 const font = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -22,19 +22,19 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={font.className}>
+
         <Providers>
+
           <ThemeProvider
             attribute="class"
             defaultTheme="light"
             enableSystem
             disableTransitionOnChange
           >
-            <UserProvider>{children}</UserProvider>
-            {/* <SupabaseProvider>
-              <UserProvider>{children}</UserProvider>
-            </SupabaseProvider> */}
+            <AuthProvider><UserProvider>{children}</UserProvider></AuthProvider>
           </ThemeProvider>
         </Providers>
+
       </body>
     </html>
   );

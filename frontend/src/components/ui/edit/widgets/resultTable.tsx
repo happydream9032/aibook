@@ -49,33 +49,26 @@ const ResultTable = (props: {
       type: 0,
       value: "",
       path: {
-        table_name: "",
+        tablename: "",
         filepath: "",
         filesize: "",
       },
     };
     console.log(props.data.type);
-    if (props.data.type === 11) {
-      item["value"] = "";
-    } else if (props.data.type === 12) {
-      item["value"] = "";
-    } else if (props.data.type === 13) {
-      item["value"] = "";
-    } else if (props.data.type === 2) {
+
+    if (props.data.type === 2) {
       item["value"] = props.data.isSQLQuery;
     } else if (props.data.type === 4) {
-      item["value"] = props.data.isPrompt;
-    } else if (props.data.type === 141) {
-      item["value"] = props.data.isPrompt;
-    } else if (props.data.type === 142) {
-      item["value"] = props.data.isPrompt;
-    } else if (props.data.type === 143) {
-      item["value"] = props.data.isPrompt;
-    } else if (props.data.type === 144) {
-      item["value"] = props.data.isPrompt;
+      let data = {
+        prompt: props.data.isPrompt,
+        query: props.data.isSQLQuery
+      }
+      item["value"] = JSON.stringify(data);
+    } else {
+      item["value"] = "";
     }
     item["type"] = props.data.type;
-    item["path"]["table_name"] = props.data.istablename;
+    item["path"]["tablename"] = props.data.istablename;
     item["path"]["filepath"] = props.data.isfilename;
     item["path"]["filesize"] = props.data.isfilesize;
 
@@ -106,6 +99,7 @@ const ResultTable = (props: {
       let conn = await db.connect();
       let check_table = await conn.query(props.data.isSQLQuery);
 
+      type CellInfo = /*unresolved*/ any
       let output = [...check_table].map((c) =>
         Object.keys(c).reduce(
           (acc, k) => (k ? { ...acc, [k]: `${c[k]}` } : acc),

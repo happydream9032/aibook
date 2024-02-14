@@ -24,9 +24,9 @@ const RightSidebar = (props: { table_data: any }) => {
   }, [props]);
 
   return (
-    <div className="top-[100px] right-1 flex w-1/6 h-[600px] items-start rounded-lg bg-transparent !fixed !z-[10] !bg-white !bg-opacity-100 shadow-sticky border border-gray-500 backdrop-blur-sm !transition">
+    <div className="fixed inset-y-0.5 right-0 w-[250px] bg-gray-600 bg-opacity-0 h-screen flex items-center justify-end">
       <div className="w-full h-full overflow-hidden rounded-lg border bg-gray-50 text-sm text-gray-700 shadow-xl">
-        <div className="flex gap-3 px-4 h-[52px] bg-white">
+        <div className="flex gap-3 mt-16 px-4 h-[52px] bg-white">
           <div className="flex flex-1 cursor-default items-center whitespace-nowrap font-bold">
             File
           </div>
@@ -40,7 +40,7 @@ const RightSidebar = (props: { table_data: any }) => {
               <input
                 className="shadow-sm border border-gray-200 rounded-md block font-sm px-2 py-2"
                 type="text"
-                value={props.table_data.path.table_name}
+                value={props.table_data.path.tablename}
                 onChange={(e) => {
                   e.preventDefault;
                 }}
