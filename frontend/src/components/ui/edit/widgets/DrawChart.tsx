@@ -77,13 +77,16 @@ const DrawChart = (props: {
         if (item == null) {
           array.splice(index, 1);
         } else {
-          if (item.path.tablename !== "") {
-            source_array.push(item.path.tablename);
-          } else {
+          if (item.path.tablename === "") {
             array.splice(index, 1);
           }
         }
       })
+
+      array.map((item: any, index: number) => {
+        source_array.push(item.path.tablename);
+      })
+      
       let table_index = source_array.length - 1
       setChartData((chartData) => ({ ...chartData, SourceArray: source_array }));
       setChartData((chartData) => ({ ...chartData, schema: array }));
