@@ -135,9 +135,10 @@ const Importfile = (props: {
       );
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
-
       if (Number(table_count) == 0) {
-        await insertFile(props.db, csvfile, csvfile.name);
+        if (csvfile.name.includes(".csv") || csvfile.name.includes(".CSV") || csvfile.name.includes(".parquet") || csvfile.name.includes(".PARQUET") || csvfile.name.includes(".arrow") || csvfile.name.includes(".ARROW")) {
+          await insertFile(props.db, csvfile, csvfile.name);
+        }
       }
       await getBufferfromFile(csvfile.name);
 
