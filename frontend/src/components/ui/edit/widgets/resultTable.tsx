@@ -176,7 +176,7 @@ const ResultTable = (props: {
                 </div>
                 <div
                   className={`${isShowLess ? "h-[250px] " : "h-[420px] "
-                    } outline-none overflow-x-scroll relative`}
+                    } outline-none overflow-x-auto relative`}
                 >
                   <div className="w-full h-full absolute">
                     <Table

@@ -86,6 +86,7 @@ const DrawChart = (props: {
       array.map((item: any, index: number) => {
         source_array.push(item.path.tablename);
       })
+
       console.log("===", array, source_array);
       let table_index = source_array.length - 1
       setChartData((chartData) => ({ ...chartData, SourceArray: source_array }));
