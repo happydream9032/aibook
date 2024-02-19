@@ -63,7 +63,6 @@ html {
 }
 .ReactVirtualized__Table {
 	display: inline-block;
-	border: 2px solid rgba(0, 0, 0, 0.1);
   }
   
 .ReactVirtualized__Table__headerColumn {
