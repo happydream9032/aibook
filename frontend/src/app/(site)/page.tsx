@@ -6,23 +6,25 @@ import { setUserState } from "@/redux/features/user-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
+import { DuckDBConfig } from "@duckdb/duckdb-wasm";
+import { initializeDuckDb } from "duckdb-wasm-kit";
+import { useDuckDb } from "duckdb-wasm-kit";
+import { AsyncDuckDB } from "duckdb-wasm-kit";
 
 export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [userData, setUserData] = useState();
+  const { db } = useDuckDb() as { db: AsyncDuckDB };
 
   useEffect(() => {
+    const config: DuckDBConfig = { query: { castBigIntToDouble: true, }, }
+    initializeDuckDb({ config, debug: true });
     let temp: any = localStorage.getItem("user_data")
     let user_data = JSON.parse(temp);
     if (user_data == null || Object.entries(user_data).length === 0) {
       router.push("/sign-in");
     } else {
-      let temp: any = localStorage.getItem("my-array")
-      const myArray = JSON.parse(temp);
-      if (myArray == null) {
-        localStorage.setItem("my-array", JSON.stringify([]));
-      }
       verify_Email(user_data)
     }
   }, []);

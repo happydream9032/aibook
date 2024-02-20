@@ -89,34 +89,29 @@ const SampleData = (props: {
     }
   }, [isSampleType]);
 
-  const getBufferfromFile = async (filename: string) => {
+  const getBufferfromFile = async (imagefile: any) => {
     try {
-      let temp: any = localStorage.getItem("my-array");
-      let myArray: any = JSON.parse(temp);
-      let count = 0;
-      myArray.map((item: any, index: number) => {
-        if (item["title"] == filename) {
-          count = count + 1;
-        }
-      });
-      if (count == 0) {
-        let file = await exportParquet(props.db, filename, filename, "zstd");
-        let temp_file: any = { title: "", content: "" };
-        let binary = "";
-        let arrayBuffer = await file.arrayBuffer();
-        let bytes = new Uint8Array(arrayBuffer);
+      if (imagefile != null) {
+        console.log(imagefile.name);
+        let formData = new FormData();
+        formData.append('file', imagefile);
 
-        let len = bytes.byteLength;
-        for (var i = 0; i < len; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        let result = window.btoa(binary);
-
-        temp_file["title"] = filename;
-        temp_file["content"] = String(result);
-
-        myArray.push(temp_file);
-        localStorage.setItem("my-array", JSON.stringify(myArray));
+        let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/uploads";
+        await axios
+          .post(update_apiUrl, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          })
+          .then((response) => {
+            if (response.data.code === 200) {
+              console.log("new file is uploaded");
+            }
+          })
+          .catch((error) => {
+            console.error("Error19:", error.message);
+            // Handle the error
+          });
       }
     } catch (error) {
       console.error("File download failed6", error);
@@ -184,7 +179,7 @@ const SampleData = (props: {
         }
       }
 
-      await getBufferfromFile(lastElement);
+      await getBufferfromFile(temp_file);
       let json_tabledata: any = {
         db: props.db,
         type: isSampleType.type,

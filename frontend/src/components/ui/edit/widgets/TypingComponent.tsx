@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Importfile from "./ImportFile";
+import Importfile from "./importfile";
 import RunSQL from "./RunSQL";
 import AIPrompt from "./AIPrompt";
 import SampleData from "./SampleData";

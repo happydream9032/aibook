@@ -279,9 +279,13 @@ const Navbar1 = (props: { id: string }) => {
               await JSON.parse(file_contents).map(
                 async (item: any, index: number) => {
                   console.log("st4", item);
-                  let temp: any = localStorage.getItem("my-array");
-                  let myArray: any = JSON.parse(temp);
-                  if (myArray.length == 0) {
+                  let conn = await db.connect();
+                  let table_count_query: any = await conn.query(
+                    `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
+                  );
+                  let table_count_array = table_count_query._offsets;
+                  let table_count = table_count_array[table_count_array.length - 1];
+                  if (Number(table_count) == 0) {
                     let binary = window.atob(item["content"]);
                     let len = binary.length;
                     let bytes = new Uint8Array(len);
@@ -290,35 +294,15 @@ const Navbar1 = (props: { id: string }) => {
                     }
                     console.log("st6");
                     const blob = new Blob([bytes]);
-                    const file = new File([blob], String(index) + ".parquet", {
-                      type: "application/vnd.apache.parquet",
-                      lastModified: Date.now(),
-                    });
-                    await insertFile(db, file, item["title"]);
-                    localStorage.setItem("my-array", file_contents);
-                  } else {
-                    myArray.map(async (item1: any, index: number) => {
-                      console.log("Done");
-                      if (item["title"] != item1["title"]) {
-                        let binary = window.atob(item["content"]);
-                        let len = binary.length;
-                        let bytes = new Uint8Array(len);
-                        for (let i = 0; i < len; i++) {
-                          bytes[i] = binary.charCodeAt(i);
-                        }
-                        console.log("st6");
-                        const blob = new Blob([bytes]);
-                        const file = new File(
-                          [blob],
-                          String(index) + ".parquet",
-                          {
-                            type: "application/vnd.apache.parquet",
-                            lastModified: Date.now(),
-                          }
-                        );
-                        await insertFile(db, file, item["title"]);
+                    const file = new File(
+                      [blob],
+                      String(index) + ".parquet",
+                      {
+                        type: "application/vnd.apache.parquet",
+                        lastModified: Date.now(),
                       }
-                    });
+                    );
+                    await insertFile(db, file, item["title"]);
                   }
                 }
               );

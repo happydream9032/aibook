@@ -173,6 +173,7 @@ def signinUser():
     if len(signin_result) > 0 :
         token = util.generate_user_token(signin_result[0][2])
         response_data = {"user" : signin_result, "token" : token}
+        print("signin user is", response_data)
         return jsonify({"code" : 200, "data" : response_data, "message" : "generate new token"}) 
     elif len(signin_result) == 0:
         return jsonify({"code" : 403, "message" : "User not exists"})
@@ -260,11 +261,12 @@ def googleLogin():
         if len(get_user_by_emal_result1) > 0:
             token = util.generate_user_token(get_user_by_emal_result1[0][2])
             response_data = {"id" : get_user_by_emal_result1[0][0], "token" : token}
+            print(response_data,"<<<<<<<<<<<")
             return jsonify({"code" : 200, "data" : response_data, "message" : "google user is registerd"}) 
         else:
             return jsonify({"code" : 401, "message" : "token generate fail!"})  
     else:
-        return jsonify({"code" : 403, "message" : "user already exists!"}) 
+        return jsonify({"code" : 403, "message" : "User is already existed"})   
 
 @app.route('/changeavatar', methods=['POST', 'GET'])
 def changeAvatar():
@@ -326,9 +328,19 @@ def get_minio_file():
     return send_file('results/' + file_name, as_attachment=True)
     #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
 
+@app.route('/getdatafile', methods=['GET'])
+def get_data_file():
+    file_name = request.args.get('FILENAME')
+    return send_file('uploads/' + file_name, as_attachment=True)
+    #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
     # from waitress import serve
     # serve(app, host='0.0.0.0', port=5000) 
+    # http_server = WSGIServer(('', 5000), app)
+    # http_server.serve_forever()
     # http_server = WSGIServer(("127.0.0.1", 5000), app)
     # http_server.serve_forever()
+    # from waitress import serve
+    # serve(app, host="0.0.0.0", port=5000)
