@@ -266,7 +266,7 @@ def googleLogin():
         else:
             return jsonify({"code" : 401, "message" : "token generate fail!"})  
     else:
-        return jsonify({"code" : 403, "message" : "User is already existed"})  
+        return jsonify({"code" : 403, "message" : "User is already existed"})   
 
 @app.route('/changeavatar', methods=['POST', 'GET'])
 def changeAvatar():
