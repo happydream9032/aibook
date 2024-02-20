@@ -9,9 +9,12 @@ class MinIODemo:
   def __init__(self, accesskey, secretkey, bucketname):
       self.bucketname = bucketname
 
-      self.client = Minio("play.min.io",
-        access_key = accesskey,
-        secret_key = secretkey,
+      self.client = Minio(
+        "localhost:9000",
+        access_key=accesskey,
+        secret_key=secretkey,
+        region="my-region",
+        secure = False
       )
 
       found = self.client.bucket_exists(self.bucketname)

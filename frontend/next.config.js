@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  compress: true,
+  compress: false,
   images: {
     domains: ["img.clerk.com", "localhost", "127.0.0.1"],
   },
-  reactStrictMode: true,
+  reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -1,4 +1,5 @@
 "use client";
+import { NextPage } from "next";
 import axios from "axios";
 import Image from "next/image";
 import UAParser from 'ua-parser-js';
@@ -15,92 +16,80 @@ type WindowWithDataLayer = Window & {
 };
 declare const window: WindowWithDataLayer;
 
-const SignIn = () => {
+const SignIn: NextPage = () => {
   const router = useRouter();
   const parser = new UAParser();
   const dispatch = useAppDispatch();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isEmail, setIsEmail] = useState("");
   const [isHostIPAdress, setIsHostIPAddress] = useState("");
   const [isHostDeviceType, setIsHostDeviceType] = useState("");
   const [isUserData, setIsUserData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     let temp: any = localStorage.getItem("user_data");
     let user_data = JSON.parse(temp);
-    if (user_data !== null) {
+    if (user_data != null) {
       setIsUserData(user_data);
     }
-    getDeviceInfo();
   }, []);
 
-  const getDeviceInfo = async () => {
-    fetch('https://ipapi.co/json/')
-      .then(function (response) {
-        response.json().then(jsonData => {
-          setIsHostIPAddress(jsonData.ip + " (" + jsonData.city + "," + jsonData.country + ")")
-          let result = parser.getResult();
-          setIsHostDeviceType(result.browser.name + " " + result.browser.version);
-        });
+  useEffect(() => {
+    if (status === 'authenticated') {
+      handleGoogleLogin(session["user"]);
+    }
+  }, [status]);
+
+  const handleGoogleLogin = async (user: any) => {
+    const date = new Date().toJSON();
+    let data = {
+      TYPE: 1,
+      EMAIL: user["email"],
+    }
+    console.log(data);
+    let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/signin";
+    await axios
+      .post(update_apiUrl, data)
+      .then((response) => {
+        console.log("google login response is", response.data);
+        if (response.data.code === 200) {
+          let user_array = response.data.data.user[0]
+          let temp_name = user_array[2].split("@");
+          let json_data = {
+            id: user_array[0],
+            user_id: user_array[1],
+            name: user["name"],
+            email: user["email"],
+            password: user_array[3],
+            status: user_array[4],
+            image: user_array[5],
+            create_at: user_array[6],
+            login_type: user_array[7],
+            ip_address: user_array[8],
+            ip_location: user_array[9],
+            token: response.data.data.token
+          }
+
+          dispatch(setUserState(json_data));
+          localStorage.setItem("user_data", JSON.stringify(json_data));
+          let temp: any = JSON.stringify(json_data)
+          setIsUserData(temp);
+          router.push('/')
+          toast.success("Login success!", { position: "top-right" });
+        }
       })
-      .then(function (data) {
-        console.log(data);
+      .catch((error) => {
+        console.error("Error19:", error.message);
+        // Handle the error
       });
   }
 
-  const handleGoogleLogin = async () => {
-    if (session) {
-      let user: any = session["user"];
-      const date = new Date().toJSON();
-      let data = {
-        USER_ID: 0,
-        EMAIL: user["email"],
-        PASSWORD: "",
-        IMAGE: "",
-        CREATE_AT: date,
-        LOGIN_TYPE: 1,
-        IP_ADDRESS: isHostIPAdress,
-        IP_LOCATION: isHostDeviceType,
-      }
-      console.log(data);
-      let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/googlelogin";
-      await axios
-        .post(update_apiUrl, data)
-        .then((response) => {
-          console.log("google login response is", response.data);
-          if (response.data.code === 200) {
-            let json_data = {
-              id: response.data.data.id,
-              user_id: 0,
-              name: user["name"],
-              email: user["email"],
-              password: "",
-              status: 1,
-              image: "",
-              create_at: date,
-              login_type: 1,
-              ip_address: isHostIPAdress,
-              ip_location: isHostDeviceType,
-              token: response.data.data.token
-            }
-
-            dispatch(setUserState(json_data));
-            localStorage.setItem("user_data", JSON.stringify(json_data));
-            toast.success("Login success!", { position: "top-right" });
-            router.push("/");
-          }
-        })
-        .catch((error) => {
-          console.error("Error19:", error.message);
-          // Handle the error
-        });
-    }
-  }
 
   const handleLogin = async () => {
     if (isUserData == null) {
       if (isEmail !== "") {
-        let data = { EMAIL: isEmail }
+        let data = { TYPE: 0, EMAIL: isEmail }
         let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/signin";
         await axios
           .post(update_apiUrl, data)
@@ -109,7 +98,7 @@ const SignIn = () => {
             if (response.data.code === 200) {
               let user_array = response.data.data.user[0]
               let temp_name = user_array[2].split("@");
-              let json_data = {
+              let json_data: any = {
                 id: user_array[0],
                 user_id: user_array[1],
                 name: temp_name[0],
@@ -125,6 +114,8 @@ const SignIn = () => {
               }
               dispatch(setUserState(json_data));
               localStorage.setItem("user_data", JSON.stringify(json_data));
+              let temp: any = JSON.stringify(json_data)
+              setIsUserData(temp);
               toast.success("Login success!", { position: "top-right" });
               router.push("/");
             }
@@ -141,15 +132,10 @@ const SignIn = () => {
     }
   }
 
-  const handleGoogleLoginSubmit = () => {
-    if (isUserData == null) {
-      signIn("google");
-      handleGoogleLogin();
-    } else {
-      toast.error("User already Logined!", { position: "top-right" });
-      router.push("/")
-    }
+  const handleGoogleLoginSubmit = async () => {
+    signIn("google");
   }
+
   return (
     <div className="__className_0ec1f4 bg-white" style={{ height: "100vh" }}>
       <ToastContainer />
@@ -175,10 +161,6 @@ const SignIn = () => {
             <button
               className="mb-10 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary"
               onClick={() => {
-                // window.dataLayer.push({
-                //   event: "google_login",
-                //   google_logins: 1,
-                // });
                 handleGoogleLoginSubmit();
               }}
             >
@@ -217,62 +199,60 @@ const SignIn = () => {
               </span>
               <span className="text-sm font-medium">Continue with Google</span>
             </button>
-            <form className="space-y-4 md:space-y-6" action="#">
-              <div className="mb-10 flex items-center justify-center">
-                <span className="h-[1px] w-full max-w-[250px] bg-gray-600 sm:block"></span>
-                <p className="w-auto px-5 text-center text-sm font-medium text-gray-600">
-                  or
+            <div className="mb-10 flex items-center justify-center">
+              <span className="h-[1px] w-full max-w-[250px] bg-gray-600 sm:block"></span>
+              <p className="w-auto px-5 text-center text-sm font-medium text-gray-600">
+                or
+              </p>
+              <span className="h-[1px] w-full max-w-[250px] bg-gray-600 sm:block"></span>
+            </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block mb-2 text-sm font-medium text-gray-900 "
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
+                required={true}
+                value={isEmail}
+                onChange={(e) => { setIsEmail(e.currentTarget.value) }}
+              />
+            </div>
+            <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleLogin(); }}>
+              CONTINUE
+            </button>
+            <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">
+              <div className="mantine-Group-root gap-4 font-medium mantine-k3ov3c">
+                <p className="text-sm font-light text-gray-600">
+                  No Account?&nbsp;
+                  <a
+                    href="/sign-up"
+                    className="font-medium text-indigo-500 hover:underline"
+                  >
+                    Sign up
+                  </a>
                 </p>
-                <span className="h-[1px] w-full max-w-[250px] bg-gray-600 sm:block"></span>
               </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block mb-2 text-sm font-medium text-gray-900 "
+              <div className="mt-8 flex items-center gap-5 md:mt-0">
+                <a
+                  href="https://www.duckbook.ai/privacy"
+                  className="text-sm font-medium text-gray-700 hover:underline"
                 >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="text-md block px-3 py-2 rounded-lg w-full bg-white border-2 border-gray-300 placeholder-gray-600 shadow-md focus:placeholder-gray-500 focus:bg-white focus:border-gray-600 focus:outline-none"
-                  required={true}
-                  value={isEmail}
-                  onChange={(e) => { setIsEmail(e.currentTarget.value) }}
-                />
+                  Privacy
+                </a>
+                <a
+                  href="https://www.duckbook.ai/terms"
+                  className="text-sm font-medium text-gray-700 hover:underline"
+                >
+                  Terms
+                </a>
               </div>
-              <button className="flex w-full items-center justify-center rounded-md bg-primary px-5 py-2 text-base font-medium text-white shadow-submit duration-300 hover:bg-primary/50" onClick={() => { handleLogin(); }}>
-                CONTINUE
-              </button>
-              <div className="mx-auto max-w-7xl py-8 md:flex md:items-center md:justify-between">
-                <div className="mantine-Group-root gap-4 font-medium mantine-k3ov3c">
-                  <p className="text-sm font-light text-gray-600">
-                    No Account?&nbsp;
-                    <a
-                      href="/sign-up"
-                      className="font-medium text-indigo-500 hover:underline"
-                    >
-                      Sign up
-                    </a>
-                  </p>
-                </div>
-                <div className="mt-8 flex items-center gap-5 md:mt-0">
-                  <a
-                    href="https://www.duckbook.ai/privacy"
-                    className="text-sm font-medium text-gray-700 hover:underline"
-                  >
-                    Privacy
-                  </a>
-                  <a
-                    href="https://www.duckbook.ai/terms"
-                    className="text-sm font-medium text-gray-700 hover:underline"
-                  >
-                    Terms
-                  </a>
-                </div>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

@@ -108,30 +108,38 @@ const ResultTable = (props: {
       );
 
       let header_titles: any = Object.keys(output[0]);
-      let length_array: Array<number> = [];
-      header_titles.map((item: string, index: number) => {
-        length_array.push(String(item).length * 3.5);
-      })
+      // let length_array: Array<number> = [];
+      // header_titles.map((item: string, index: number) => {
+      //   if (String(item).length * 3.5 > 150){
+      //     length_array.push(String(item).length * 3.5);
+      //   } else {
+      //     length_array.push(150);
+      //   }
+      // })
 
       let body_table: any = [];
       output.map((item: any, index: number) => {
         let body_temp: any = {};
         body_temp["id"] = index + 1;
-        Object.values(item).map((value: any, index1: number) => {
-          if ((String(value).length) * 2 > length_array[index1]) {
-            length_array[index1] = (String(value).length) * 2;
-          }
-        })
+        // Object.values(item).map((value: any, index1: number) => {
+        //   if ((String(value).length) * 2 > length_array[index1]) {
+        //     if ((String(value).length) * 2 > 150) {
+        //       length_array[index1] = (String(value).length) * 2;
+        //     } else {
+        //       length_array[index1] = 150;
+        //     }
+        //   }
+        // })
         body_table.push(item);
       });
-      setIsColumnLengthArray(length_array);
+      // setIsColumnLengthArray(length_array);
 
       // set total width of react-virtualized table
-      let total_width = 0;
-      for (let i = 0; i < length_array.length; i++) {
-        total_width = total_width + length_array[i] + 4;
-      }
-      setIsColumnTotalLength(total_width);
+      // let total_width = 0;
+      // for (let i = 0; i < length_array.length; i++) {
+      //   total_width = total_width + length_array[i] + 4;
+      // }
+      // setIsColumnTotalLength(total_width);
 
       if (props.data.isreturn == 1) {
         await setComponetType(temp_data);
@@ -180,7 +188,7 @@ const ResultTable = (props: {
                 >
                   <div className="w-full h-full absolute">
                     <Table
-                      width={isColumnTotalLength * 5}
+                      width={isTableTitle.length * 250}
                       height={isShowLess ? 220 : 390}
                       headerHeight={50}
                       rowHeight={50}
@@ -192,7 +200,7 @@ const ResultTable = (props: {
                           key={index}
                           label={item}
                           dataKey={item}
-                          width={isColumnLengthArray[index] * 5}
+                          width={isTableTitle.length * 250}
                         />
                       ))}
                     </Table>

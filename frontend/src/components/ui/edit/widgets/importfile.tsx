@@ -90,34 +90,29 @@ const Importfile = (props: {
   }, [duckbook]);
 
 
-  const getBufferfromFile = async (filename: string) => {
+  const getBufferfromFile = async (imagefile: any) => {
     try {
-      let temp: any = localStorage.getItem("my-array");
-      let myArray: any = JSON.parse(temp);
-      let count = 0;
-      myArray.map((item: any) => {
-        if (item["title"] == filename) {
-          count = count + 1;
-        }
-      });
-      if (count == 0) {
-        let file = await exportParquet(props.db, filename, filename, "zstd");
-        let temp_file: any = { title: "", content: "" };
-        let binary = "";
-        let arrayBuffer = await file.arrayBuffer();
-        let bytes = new Uint8Array(arrayBuffer);
+      if (imagefile != null) {
+        console.log(imagefile.name);
+        let formData = new FormData();
+        formData.append('file', imagefile);
 
-        let len = bytes.byteLength;
-        for (var i = 0; i < len; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        let result = window.btoa(binary);
-
-        temp_file["title"] = filename;
-        temp_file["content"] = String(result);
-
-        myArray.push(temp_file);
-        localStorage.setItem("my-array", JSON.stringify(myArray));
+        let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/uploads";
+        await axios
+          .post(update_apiUrl, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          })
+          .then((response) => {
+            if (response.data.code === 200) {
+              console.log("new file is uploaded");
+            }
+          })
+          .catch((error) => {
+            console.error("Error19:", error.message);
+            // Handle the error
+          });
       }
     } catch (error) {
       console.error("File download failed6", error);
@@ -136,11 +131,13 @@ const Importfile = (props: {
       let table_count_array = table_count_query._offsets;
       let table_count = table_count_array[table_count_array.length - 1];
       if (Number(table_count) == 0) {
-        if (csvfile.name.includes(".csv") || csvfile.name.includes(".CSV") || csvfile.name.includes(".parquet") || csvfile.name.includes(".PARQUET") || csvfile.name.includes(".arrow") || csvfile.name.includes(".ARROW")) {
-          await insertFile(props.db, csvfile, csvfile.name);
-        }
+        // if (csvfile.name.includes(".csv") || csvfile.name.includes(".CSV") || csvfile.name.includes(".parquet") || csvfile.name.includes(".PARQUET") || csvfile.name.includes(".arrow") || csvfile.name.includes(".ARROW")) {
+        //   await insertFile(props.db, csvfile, csvfile.name);
+        // }
+        await insertFile(props.db, csvfile, csvfile.name);
+        await getBufferfromFile(csvfile);
       }
-      await getBufferfromFile(csvfile.name);
+
 
       let query = `SELECT * FROM '${csvfile.name}';`;
       let json_tabledata: any = {
@@ -221,7 +218,7 @@ const Importfile = (props: {
         }
       }
 
-      await getBufferfromFile(lastElement);
+      await getBufferfromFile(temp_file);
       let json_tabledata: any = {
         db: props.db,
         type: 12,
@@ -270,7 +267,7 @@ const Importfile = (props: {
         await insertFile(props.db, file, tablename);
       }
 
-      await getBufferfromFile(tablename);
+      await getBufferfromFile(file);
       let json_tabledata: any = {
         db: props.db,
         type: 13,
@@ -432,7 +429,7 @@ const Importfile = (props: {
           await insertFile(props.db, file, isFileName);
         }
 
-        await getBufferfromFile(isFileName);
+        await getBufferfromFile(file);
         let json_tabledata: any = {
           db: props.db,
           type: 15,

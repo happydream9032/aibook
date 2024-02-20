@@ -11,6 +11,8 @@ import { setDuckBookListState } from "@/redux/features/navbarlist-slice";
 import { setDuckBookState } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
+import { DuckDBConfig } from "@duckdb/duckdb-wasm";
+import { initializeDuckDb } from "duckdb-wasm-kit";
 
 export default function Edit({ params }: { params: { id: string } }) {
   const duckbook_id: string = params.id;
@@ -28,50 +30,11 @@ export default function Edit({ params }: { params: { id: string } }) {
       router.push("/");
     } else {
       if (db != null) {
-        InitDuckDB();
+        getTableData();
       }
+
     }
   }, [db]);
-
-  const InitDuckDB = async () => {
-    try {
-      let temp: any = localStorage.getItem("my-array");
-      const myArray = JSON.parse(temp);
-      if (myArray.length === 0 || myArray == null) {
-        localStorage.setItem("my-array", JSON.stringify([]));
-        await getTableData();
-      } else {
-        await myArray.map(async (item: any, index: number) => {
-          let conn = await db.connect();
-          let table_count_query: any = await conn?.query(
-            `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${item["title"]}';`
-          );
-          let table_count_array = table_count_query._offsets;
-          let table_count = table_count_array[table_count_array.length - 1];
-          console.log("Number(table_count)", Number(table_count));
-          if (Number(table_count) == 0) {
-            let binary = window.atob(item["content"]);
-            let len = binary.length;
-            let bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-              bytes[i] = binary.charCodeAt(i);
-            }
-            console.log("initial file is", item["title"])
-            const blob = new Blob([bytes]);
-            const file = new File([blob], String(index) + ".parquet", {
-              type: "application/vnd.apache.parquet",
-              lastModified: Date.now(),
-            });
-            await insertFile(db, file, item["title"]);
-            await getTableData();
-          }
-        });
-      }
-
-    } catch (error) {
-      console.log("222", error);
-    }
-  };
 
   const setDuckBookDB = async () => {
     let data = {
@@ -103,6 +66,15 @@ export default function Edit({ params }: { params: { id: string } }) {
           temp_data["HASH"] = String(item[6]);
           final_data.push(temp_data);
         });
+        let temp: any = final_data[0];
+        console.log(">>>>1<<<<", final_data[0])
+        if (final_data.length === 0) {
+          setIsLoading(true);
+        } else {
+          getFileFromMinIO(temp.DATA)
+
+        }
+
         console.log("store duckbook is", final_data[0])
         dispatch(setDuckBookState(final_data[0]));
       })
@@ -136,7 +108,6 @@ export default function Edit({ params }: { params: { id: string } }) {
     });
     await setDuckBookDB();
     await dispatch(setDuckBookListState(final_data));
-    setIsLoading(true);
   };
 
   const getTableData = async () => {
@@ -160,6 +131,59 @@ export default function Edit({ params }: { params: { id: string } }) {
         console.error("Error4:", error.message);
       });
   };
+
+  const getFileFromMinIO = async (isFileNameArray: string) => {
+    try {
+      let temp_data: any = JSON.parse(isFileNameArray);
+      temp_data.map(async (item: any, index: number) => {
+        console.log(">>>", item, item.path)
+        if (item.path.tablename !== "") {
+          let isFileName = item.path.tablename;
+          let select_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/getdatafile";
+          let response = await axios.get(select_apiUrl, {
+            params: {
+              FILENAME: isFileName
+            },
+            responseType: 'blob' // Ensure the response is treated as a Blob
+          });
+          console.log("=>=", response)
+          let type = "";
+          if (String(isFileName).includes(".csv") || String(isFileName).includes(".CSV")) {
+            type = "text/csv";
+          } else if (String(isFileName).includes(".parquet") || String(isFileName).includes(".PARQUET")) {
+            type = "application/vnd.apache.parquet";
+          } else if (String(isFileName).includes(".arrow") || String(isFileName).includes(".ARROW")) {
+            type = "application/vnd.apache.arrow.file";
+          }
+          console.log("uploading file type is", type);
+          let blob = new Blob([response.data], { type: type });
+          let file = new File([blob], isFileName, {
+            type: type,
+            lastModified: Date.now(),
+          });
+          console.log(">>db<<", db)
+          let conn = await db.connect();
+          let table_count_query: any = await conn.query(
+            `SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '${isFileName}';`
+          );
+          let table_count_array = table_count_query._offsets;
+          let table_count = table_count_array[table_count_array.length - 1];
+
+          if (Number(table_count) == 0) {
+            await insertFile(db, file, isFileName);
+          }
+          conn.close();
+
+        }
+        if (index === temp_data.length - 1) {
+          setIsLoading(true);
+        }
+      })
+
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  }
 
   return (
     <main>
