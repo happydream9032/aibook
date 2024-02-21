@@ -325,7 +325,7 @@ def get_minio_file():
     minio_instance = MinIODemo(accesskey, secretkey, buckectname)
     file_name = minio_instance.get_file(filename)
     print("file_name is", file_name)
-    return send_file('uploads/' + file_name, as_attachment=True)
+    return send_file('results/' + file_name, as_attachment=True)
     #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
 
 @app.route('/getdatafile', methods=['GET'])
