@@ -123,7 +123,7 @@ def addNewUser():
     data = request.json
     util = Utils()
     mysqlDB = Database()
-    getuser_by_email_result = mysqlDB.getUsersbyEmail(data, 3)
+    getuser_by_email_result = mysqlDB.getUsersbyEmail(data, 0)
     if len(getuser_by_email_result) == 0:
         hash_value = hashlib.md5(data["PASSWORD"].encode()).hexdigest()
         data["PASSWORD"] = hash_value
@@ -133,7 +133,7 @@ def addNewUser():
         mail_message.body = "OTP of your account is -" + str(otp)
         print("sdfsd")
         mail.send(mail_message)
-        get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
+        get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 0)
         if len(get_user_by_emal_result) > 0:
             token = util.generate_otp_token(get_user_by_emal_result[0][2])
             update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
@@ -154,7 +154,7 @@ def resetOTPCode():
     mail_message = Message('Hello from the databook.ai!', sender = os.getenv('SENDER_EMAIL'), recipients = [data['EMAIL']])
     mail_message.body = "OTP of your account is -" + str(otp)
 
-    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 3)
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 0)
     if len(get_user_by_emal_result) > 0:
         token = util.generate_otp_token(get_user_by_emal_result[0][2])
         update_otp_result = mysqlDB.updateOTPbyEmail(otp, get_user_by_emal_result[0][0])
@@ -169,7 +169,7 @@ def signinUser():
     print(data)
     util = Utils()
     mysqlDB = Database()
-    signin_result = mysqlDB.getUsersbyEmail(data, 2)
+    signin_result = mysqlDB.getUsersbyEmail(data, 0)
     if len(signin_result) > 0 :
         token = util.generate_user_token(signin_result[0][2])
         response_data = {"user" : signin_result, "token" : token}
@@ -201,7 +201,7 @@ def getUsersbyEmail():
     data = request.json
     print(data)
     mysqlDB = Database()
-    signin_result = mysqlDB.getUsersbyEmail(data, 3)
+    signin_result = mysqlDB.getUsersbyEmail(data, 0)
     return signin_result
 
 @app.route('/getUsersbyID', methods=['POST'])
@@ -216,7 +216,7 @@ def getUsersbyID():
 def deleteUser():
     data = request.json
     mysqlDB = Database()
-    get_allusers_by_id = mysqlDB.getUsersbyEmail(data, 3)
+    get_allusers_by_id = mysqlDB.getUsersbyEmail(data, 1)
     if len(get_allusers_by_id) > 0:
         for i in range(len(get_allusers_by_id)):
             delete_user_result = mysqlDB.deleteUserData(get_allusers_by_id[i][0])
@@ -251,16 +251,16 @@ def googleLogin():
     print(data)
     util = Utils()
     mysqlDB = Database()
-    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 1)
+    get_user_by_emal_result = mysqlDB.getUsersbyEmail(data, 0)
     if len(get_user_by_emal_result) == 0:
         encrypted_string = hashlib.md5(data["PASSWORD"].encode()).hexdigest()
         data["PASSWORD"] = encrypted_string
         addUser_result = mysqlDB.adduser(data, 1)
     
-        get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 1)
+        get_user_by_emal_result1 = mysqlDB.getUsersbyEmail(data, 0)
         if len(get_user_by_emal_result1) > 0:
             token = util.generate_user_token(get_user_by_emal_result1[0][2])
-            response_data = {"id" : get_user_by_emal_result1[0][0], "token" : token}
+            response_data = {"user" : get_user_by_emal_result1, "token" : token}
             print(response_data,"<<<<<<<<<<<")
             return jsonify({"code" : 200, "data" : response_data, "message" : "google user is registerd"}) 
         else:

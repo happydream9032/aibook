@@ -5,15 +5,27 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import UAParser from 'ua-parser-js';
+import { useSession, signIn } from "next-auth/react";
+import { toast, ToastContainer } from "react-toastify";
+import { setUserState } from "@/redux/features/user-slice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 const SignUp = () => {
   const parser = new UAParser();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [show, setShow] = useState(false);
+  const { data: session, status } = useSession();
   const [isEmail, setIsEmail] = useState("");
   const [isPassword, setIsPassword] = useState("");
   const [isHostIPAdress, setIsHostIPAddress] = useState("");
   const [isHostDeviceType, setIsHostDeviceType] = useState("");
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      handleGoogleLogin(session["user"]);
+    }
+  }, [status]);
 
   useEffect(() => {
     setShow(false);
@@ -71,6 +83,60 @@ const SignUp = () => {
     }
   }
 
+  const handleGoogleLogin = async (user: any) => {
+    const date = new Date().toJSON();
+    let data = {
+      USER_ID: 0,
+      EMAIL: user["email"],
+      PASSWORD: "",
+      IMAGE: "",
+      CREATE_AT: date,
+      LOGIN_TYPE: 1,
+      IP_ADDRESS: isHostIPAdress,
+      IP_LOCATION: isHostDeviceType,
+      TYPE: 0
+    }
+    console.log(data);
+    let update_apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + "/googlelogin";
+    await axios
+      .post(update_apiUrl, data)
+      .then((response) => {
+        console.log("google login response is", response.data);
+        if (response.data.code === 200) {
+          let user_array = response.data.data.user[0]
+          let temp_name = user_array[2].split("@");
+          let json_data = {
+            id: user_array[0],
+            user_id: user_array[1],
+            name: user["name"],
+            email: user["email"],
+            password: user_array[3],
+            status: user_array[4],
+            image: user_array[5],
+            create_at: user_array[6],
+            login_type: user_array[7],
+            ip_address: user_array[8],
+            ip_location: user_array[9],
+            token: response.data.data.token
+          }
+
+          dispatch(setUserState(json_data));
+          localStorage.setItem("user_data", JSON.stringify(json_data));
+          let temp: any = JSON.stringify(json_data)
+          router.push('/')
+          toast.success("Login success!", { position: "top-right" });
+        }
+      })
+      .catch((error) => {
+        console.error("Error19:", error.message);
+        // Handle the error
+      });
+  }
+
+  const handleGoogleLoginSubmit = async () => {
+    signIn("google");
+  }
+
   return (
     <div className="__className_0ec1f4 bg-white" style={{ height: "100vh" }}>
       <div className="mantine-prepend-Center-root pt-20 mantine-prepend-ojrz4j flex items-center justify-center">
@@ -92,7 +158,10 @@ const SignUp = () => {
             <span className="text-base font-bold text-gray-400 md:text-lg mb-10">
               to continue to DataBook
             </span>
-            <button className="mb-6 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary">
+            <button className="mb-6 flex w-full items-left justify-left rounded-sm border border-stroke bg-[#f8f8f8] px-6 py-2 text-base text-black outline-none transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary"
+              onClick={() => {
+                handleGoogleLoginSubmit();
+              }}>
               <span className="mr-3">
                 <svg
                   width="20"
