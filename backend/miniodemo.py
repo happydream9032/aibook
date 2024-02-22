@@ -10,12 +10,11 @@ class MinIODemo:
       self.bucketname = bucketname
 
       self.client = Minio(
-        # "localhost:9000",
-         "play.min.io",
+        "localhost:9000",
         access_key=accesskey,
         secret_key=secretkey,
-        # region="my-region",
-        # secure = False
+        region="my-region",
+        secure = False
       )
 
       found = self.client.bucket_exists(self.bucketname)
