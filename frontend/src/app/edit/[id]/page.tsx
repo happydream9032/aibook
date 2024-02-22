@@ -134,6 +134,7 @@ export default function Edit({ params }: { params: { id: string } }) {
 
   const getFileFromMinIO = async (isFileNameArray: string) => {
     try {
+      let filename_array : Array<string> = [];
       let temp_data: any = JSON.parse(isFileNameArray);
       temp_data.map(async (item: any, index: number) => {
         console.log(">>>", item, item.path)
@@ -168,9 +169,13 @@ export default function Edit({ params }: { params: { id: string } }) {
           );
           let table_count_array = table_count_query._offsets;
           let table_count = table_count_array[table_count_array.length - 1];
-
+          console.log(table_count_array.length, isFileName, ">>count<<", Number(table_count))
+          
           if (Number(table_count) == 0) {
-            await insertFile(db, file, isFileName);
+            if (filename_array.includes(isFileName) == false){
+              filename_array.push(isFileName)
+              await insertFile(db, file, isFileName);
+            }
           }
           conn.close();
 
