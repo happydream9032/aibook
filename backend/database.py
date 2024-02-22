@@ -82,15 +82,9 @@ class Database:
   
   def getUsersbyEmail(self, data, type):
     if type == 0:
-      sql ="SELECT * FROM tbl_users WHERE login_type = %s AND email = %s AND status = %s"
-      adr = (0, data["EMAIL"], 1)
+      sql ="SELECT * FROM tbl_users WHERE email = %s AND status = %s"
+      adr = (data["EMAIL"], 1)
     elif type == 1:
-      sql ="SELECT * FROM tbl_users WHERE login_type = %s AND email = %s AND status = %s"
-      adr = (1, data["EMAIL"], 1)
-    elif type == 2:
-      sql ="SELECT * FROM tbl_users WHERE email = %s AND status = %s AND login_type = %s"
-      adr = (data["EMAIL"], 1, data["TYPE"])
-    elif type == 3:
       sql ="SELECT * FROM tbl_users WHERE (id = %s OR user_id = %s) AND email = %s"
       adr = ( data["USER_ID"],  data["USER_ID"], data["EMAIL"])
     self.mycursor.execute(sql, adr)
