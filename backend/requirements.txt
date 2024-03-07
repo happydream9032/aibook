@@ -4,8 +4,11 @@ openai==0.28
 flask
 flask_cors
 python-dotenv
+fastparquet
 flask-mysqldb
+mysql-connector
 pyjwt
 cryptography
 flask_mail
 minio
+pandas

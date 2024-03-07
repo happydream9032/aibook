@@ -107,6 +107,23 @@ const DropdownModal = (props: {
                   </button>
                 </li>
                 <li className="my-px">
+                  <button
+                    className="w-full flex flex-row items-center h-10 px-4 rounded-lg text-gray-600 hover:bg-gray-100"
+                    onClick={() => {
+                      props.selectComponentType(5);
+                      props.changeDropdownOpen(false);
+                    }}
+                  >
+                    <Image
+                      src={ChartIcon}
+                      alt=""
+                      width="24"
+                      height="24"
+                    />
+                    <span className="ml-3">RAWGRAPH</span>
+                  </button>
+                </li>
+                <li className="my-px">
                   <span className="flex font-medium text-sm text-gray-400 px-4 my-4 uppercase">
                     More
                   </span>

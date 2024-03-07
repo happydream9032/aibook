@@ -7,6 +7,7 @@ import DropdownModal from "./DropdownModal";
 import DrawChart from "./DrawChart";
 import { useDuckDb } from "duckdb-wasm-kit";
 
+import RawGraphWidget from "./RawgraphWidget";
 import RightChartSidebar from "@/components/layout/Sidebar/RightChartSidebar";
 import { setChangeDuckBookData } from "@/redux/features/navbar-slice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -29,17 +30,20 @@ const TypingComponent = (props: {
   const duckbook: any = useAppSelector((state) => state.navbarReducer.data);
   const { db, loading, error } = useDuckDb();
   const [isShowChildren, setIsShowChildren] = useState(false);
+  const [isShowRawGraph, setIsRawGraph] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); //show dropmenu
   const [value, setValue] = useState(""); // current text of input component
-  const [elements, setElements] = useState<element_type[]>([{
-    type: 0,
-    value: "",
-    path: {
-      tablename: "",
-      filepath: "",
-      filesize: ""
-    }
-  }]);
+  const [elements, setElements] = useState<element_type[]>([
+    {
+      type: 0,
+      value: "",
+      path: {
+        tablename: "",
+        filepath: "",
+        filesize: "",
+      },
+    },
+  ]);
 
   useEffect(() => {
     if (value === "/") {
@@ -56,7 +60,7 @@ const TypingComponent = (props: {
   }, [db]);
 
   useEffect(() => {
-    console.log("111", duckbook)
+    console.log("111", duckbook);
     const element_data = JSON.parse(duckbook["DATA"]);
     element_data.map((item: any, index: number) => {
       if (item == null) {
@@ -70,17 +74,25 @@ const TypingComponent = (props: {
     setIsDropdownOpen(false);
   };
 
+  const closeRawGraphModal = () => {
+    setIsRawGraph(false);
+  };
+
   // handle dropdown events
   const handleChangeComponentType = (type: number) => {
-    const array = [...elements];
-    let path = { tablename: "", filepath: "", filesize: "" };
-    let componet = { type: type, value: "", path: path };
-    array.push(componet);
-    console.log("array is ===", array);
-    setElements(array);
+    if (type != 5) {
+      const array = [...elements];
+      let path = { tablename: "", filepath: "", filesize: "" };
+      let componet = { type: type, value: "", path: path };
+      array.push(componet);
+      console.log("array is ===", array);
+      setElements(array);
 
-    dispatch(setChangeDuckBookData(JSON.stringify(array)));
-    setValue("");
+      dispatch(setChangeDuckBookData(JSON.stringify(array)));
+      setValue("");
+    } else {
+      setIsRawGraph(true);
+    }
   };
 
   const handleChangeDropdownOpen = (bool: boolean) => {
@@ -171,26 +183,11 @@ const TypingComponent = (props: {
             }
           />
         ) : item.type === 131 ? (
-          <DrawChart
-            type={item}
-            index={index}
-            db={db}
-            chart_type={0}
-          />
+          <DrawChart type={item} index={index} db={db} chart_type={0} />
         ) : item.type === 132 ? (
-          <DrawChart
-            type={item}
-            index={index}
-            db={db}
-            chart_type={1}
-          />
+          <DrawChart type={item} index={index} db={db} chart_type={1} />
         ) : item.type === 133 ? (
-          <DrawChart
-            type={item}
-            index={index}
-            db={db}
-            chart_type={2}
-          />
+          <DrawChart type={item} index={index} db={db} chart_type={2} />
         ) : item.type === 4 ? (
           <AIPrompt
             type={item}
@@ -243,7 +240,7 @@ const TypingComponent = (props: {
     ));
   };
   return (
-    <div >
+    <div>
       <div>
         {isShowChildren && contents()}
         <input
@@ -268,6 +265,9 @@ const TypingComponent = (props: {
               handleChangeDropdownOpen(bool)
             }
           />
+        )}
+        {isShowRawGraph && (
+          <RawGraphWidget closeModal={() => closeRawGraphModal()} />
         )}
       </div>
     </div>

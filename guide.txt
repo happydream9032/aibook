@@ -23,3 +23,9 @@ You can modify .env file of backend to your mysql connection details.
 2. You must run this command by  "pip install -r requirements.txt"
 3. You can run backend.bat to run backend.
 4. You can change your OPEN_AI_KEY in ask.py file at 10 line.
+
+--------------- Run datagraph-----------------
+
+1. You must run "yarn add" by cmd into /frontend location
+2. If you must install yarn at first, you can run this command. "npm install --global yarn"
+3. You can run datagraph.bat to run frontend.

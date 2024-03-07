@@ -29,10 +29,7 @@ export default function Edit({ params }: { params: { id: string } }) {
     if (user_data === null) {
       router.push("/");
     } else {
-      if (db != null) {
-        getTableData();
-      }
-
+      getTableData();
     }
   }, [db]);
 

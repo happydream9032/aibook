@@ -1,5 +1,6 @@
 import os
 import hashlib
+import pandas as pd
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from pymysql import NULL
@@ -332,6 +333,30 @@ def get_minio_file():
 def get_data_file():
     file_name = request.args.get('FILENAME')
     return send_file('uploads/' + file_name, as_attachment=True)
+    #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
+
+@app.route('/miniofiles1', methods=['GET'])
+def get_minio_file1():
+    buckectname = request.args.get('BUCKETNAME')
+    filename = request.args.get('FILENAME')
+    secretkey = request.args.get('SECRETKEY')
+    accesskey = request.args.get('ACCESSKEY')
+
+    minio_instance = MinIODemo(accesskey, secretkey, buckectname)
+    file_name = minio_instance.get_file(filename)
+
+    if ".csv" in file_name or ".CSV" in file_name:
+        return send_file('results/' + file_name, as_attachment=True)
+    elif ".parquet" in file_name or ".PARQUET" in file_name:
+        changed_file_name = file_name.replace(".parquet", ".csv")
+        df = pd.read_parquet('results/' + file_name, engine='fastparquet')
+        df.to_csv('results/' + changed_file_name, index=False)
+        return send_file('results/' + changed_file_name, as_attachment=True)
+    elif ".arrow" in file_name or ".ARROW" in file_name:
+        changed_file_name = file_name.replace(".arrow", ".csv")
+        df = pd.read_feather('results/' + file_name)
+        df.to_csv('results/' + changed_file_name, index=False)
+        return send_file('results/' + changed_file_name, as_attachment=True)
     #return jsonify({"code" : 200, "message" : "File uploaded successfully"})  
 
 if __name__ == '__main__':
